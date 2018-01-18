@@ -1,7 +1,9 @@
 #[macro_use]
 extern crate error_chain;
+extern crate ipnet;
 
 mod errors;
+mod iprules;
 
 use errors::*;
 
