@@ -1,0 +1,6 @@
+[package]
+name = "drawbridge"
+version = "0.1.0"
+authors = ["Ben Challenor <ben@challenor.org>"]
+
+[dependencies]
