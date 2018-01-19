@@ -14,10 +14,10 @@ use cloud::Cloud;
 use cloud::Firewall;
 use cloud::Instance;
 use cloud::InstanceType;
-use cloud::mem::MemCloud;
+use cloud::aws::AwsCloud;
 use dns::Dns;
 use dns::DnsZone;
-use dns::mem::MemDns;
+use dns::aws::AwsDns;
 use errors::*;
 use ipnet::Ipv4Net;
 use iprules::IpIngressRule;
@@ -62,11 +62,15 @@ fn run() -> Result<()> {
         None => Command::Stop,
     };
 
-    let cloud = MemCloud::new()?;
-    cloud.create_firewall("fw")?;
-    cloud.create_instance("inst", Some("inst.example.com"))?;
-    let dns = MemDns::new()?;
-    dns.create_dns_zone("example.com")?;
+    let profile_opt = std::env::var("DRAWBRIDGE_PROFILE").ok();
+    let profile = profile_opt.as_ref().map_or("default", String::as_ref);
+
+    let tag_key = "Drawbridge";
+    let tag_value = profile;
+    println!("Filtering resources with tag: {}={}", tag_key, tag_value);
+
+    let cloud = AwsCloud::new(tag_key, tag_value)?;
+    let dns = AwsDns::new()?;
 
     dispatch(cmd, &cloud, &dns)
 }
