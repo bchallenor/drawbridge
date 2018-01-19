@@ -31,7 +31,7 @@ impl AwsDnsZone {
             let value = AwsDnsZone {
                 id: hz.id.trim_left_matches("/hostedzone/").to_owned(),
                 name: hz.name,
-                client: client.clone(),
+                client: Rc::clone(client),
             };
             values.push(value);
         }

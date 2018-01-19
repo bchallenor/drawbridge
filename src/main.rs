@@ -214,8 +214,8 @@ mod tests {
 
         let cmd = Command::Start {
             instance_type: InstanceType("t2.medium".to_owned()),
-            ip_cidrs: ip_cidrs.iter().cloned().collect(),
-            ip_services: ip_services.iter().cloned().collect(),
+            ip_cidrs: ip_cidrs.to_vec(),
+            ip_services: ip_services.to_vec(),
         };
 
         // test that start command opens the firewall

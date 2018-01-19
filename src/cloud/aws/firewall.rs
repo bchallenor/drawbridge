@@ -37,7 +37,7 @@ impl AwsFirewall {
             let value = AwsFirewall {
                 id: sg.group_id.unwrap(),
                 name: sg.group_name.unwrap(),
-                client: client.clone(),
+                client: Rc::clone(client),
             };
             values.push(value);
         }

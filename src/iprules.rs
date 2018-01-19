@@ -106,18 +106,18 @@ mod tests {
     fn test_port_range_display_and_parse() {
         test_display_and_parse(IpPortRange(1, 1), "1");
         test_display_and_parse(IpPortRange(1, 10), "1-10");
-        test_display_and_parse(IpPortRange(1, 65535), "1-65535");
+        test_display_and_parse(IpPortRange(1, 65_535), "1-65535");
     }
 
     #[test]
     fn test_service_display_and_parse() {
         test_display_and_parse(IpService::Tcp(IpPortRange(1, 1)), "1/tcp");
         test_display_and_parse(IpService::Tcp(IpPortRange(1, 10)), "1-10/tcp");
-        test_display_and_parse(IpService::Tcp(IpPortRange(1, 65535)), "1-65535/tcp");
+        test_display_and_parse(IpService::Tcp(IpPortRange(1, 65_535)), "1-65535/tcp");
 
         test_display_and_parse(IpService::Udp(IpPortRange(1, 1)), "1/udp");
         test_display_and_parse(IpService::Udp(IpPortRange(1, 10)), "1-10/udp");
-        test_display_and_parse(IpService::Udp(IpPortRange(1, 65535)), "1-65535/udp");
+        test_display_and_parse(IpService::Udp(IpPortRange(1, 65_535)), "1-65535/udp");
     }
 
     fn test_display_and_parse<V>(v: V, s: &str)
