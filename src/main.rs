@@ -2,6 +2,8 @@
 extern crate error_chain;
 extern crate ipnet;
 
+mod cloud;
+mod dns;
 mod errors;
 mod iprules;
 
