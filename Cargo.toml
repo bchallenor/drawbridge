@@ -3,6 +3,9 @@ name = "drawbridge"
 version = "0.1.0"
 authors = ["Ben Challenor <ben@challenor.org>"]
 
+[profile.release]
+lto = true
+
 [dependencies]
 error-chain = "0.11.0"
 ipnet = "1.0.0"
