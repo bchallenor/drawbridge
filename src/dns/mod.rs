@@ -1,3 +1,5 @@
+pub mod mem;
+
 use errors::*;
 use std::fmt;
 use std::net::Ipv4Addr;
