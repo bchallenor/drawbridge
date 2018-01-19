@@ -18,7 +18,7 @@ struct MemDnsZoneState {
 }
 
 impl MemDnsZone {
-    pub fn new(id: String, name: String) -> Result<MemDnsZone> {
+    pub(super) fn new(id: String, name: String) -> Result<MemDnsZone> {
         Ok(MemDnsZone {
             id,
             name,

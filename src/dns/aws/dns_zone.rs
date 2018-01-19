@@ -19,7 +19,7 @@ pub struct AwsDnsZone {
 }
 
 impl AwsDnsZone {
-    pub fn list(client: &Rc<Route53>) -> Result<Vec<AwsDnsZone>> {
+    pub(super) fn list(client: &Rc<Route53>) -> Result<Vec<AwsDnsZone>> {
         let req = ListHostedZonesRequest {
             ..Default::default()
         };

@@ -18,7 +18,7 @@ struct MemFirewallState {
 }
 
 impl MemFirewall {
-    pub fn new(id: String, name: String) -> Result<MemFirewall> {
+    pub(super) fn new(id: String, name: String) -> Result<MemFirewall> {
         Ok(MemFirewall {
             id,
             name,

@@ -1,6 +1,6 @@
 use rusoto_ec2::Tag;
 
-pub trait TagFinder<'a> {
+pub(super) trait TagFinder<'a> {
     fn find_tag(self, key: &str) -> Option<&'a str>;
 }
 

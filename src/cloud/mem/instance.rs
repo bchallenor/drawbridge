@@ -21,7 +21,7 @@ struct MemInstanceState {
 }
 
 impl MemInstance {
-    pub fn new(
+    pub(super) fn new(
         id: String,
         name: String,
         fqdn: Option<String>,
