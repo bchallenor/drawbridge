@@ -44,7 +44,7 @@ impl AwsInstance {
                     id: id,
                     name: name.to_owned(),
                     fqdn: fqdn.map(str::to_owned),
-                    client: client.clone(),
+                    client: Rc::clone(client),
                 };
                 values.push(value);
             }
