@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate error_chain;
 extern crate ipnet;
+extern crate openssl_probe;
 extern crate rusoto_core;
 extern crate rusoto_ec2;
 extern crate rusoto_route53;
@@ -38,6 +39,9 @@ enum Command {
 }
 
 fn run() -> Result<()> {
+    // For e.g. Termux support on Android
+    openssl_probe::init_ssl_cert_env_vars();
+
     let mut args = env::args().skip(1);
 
     let cmd = match args.next() {
