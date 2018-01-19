@@ -54,7 +54,7 @@ impl Firewall for MemFirewall {
         R: IntoIterator<Item = &'a IpIngressRule>,
     {
         let mut state = self.state.borrow_mut();
-        for rule in rules.into_iter() {
+        for rule in rules {
             state.rules.insert(*rule);
         }
         Ok(())
@@ -65,7 +65,7 @@ impl Firewall for MemFirewall {
         R: IntoIterator<Item = &'a IpIngressRule>,
     {
         let mut state = self.state.borrow_mut();
-        for rule in rules.into_iter() {
+        for rule in rules {
             state.rules.remove(rule);
         }
         Ok(())
