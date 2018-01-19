@@ -30,7 +30,7 @@ impl MemDnsZone {
 
     pub fn lookup(&self, fqdn: &str) -> Result<Option<Ipv4Addr>> {
         let state = self.state.borrow();
-        Ok(state.records.get(fqdn).map(|x| *x))
+        Ok(state.records.get(fqdn).cloned())
     }
 }
 
