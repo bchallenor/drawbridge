@@ -1,0 +1,165 @@
+use cloud::Firewall;
+use errors::*;
+use ipnet::Ipv4Net;
+use iprules::IpIngressRule;
+use iprules::IpPortRange;
+use iprules::IpService;
+use rusoto_ec2::AuthorizeSecurityGroupIngressRequest;
+use rusoto_ec2::DescribeSecurityGroupsRequest;
+use rusoto_ec2::Ec2;
+use rusoto_ec2::Filter;
+use rusoto_ec2::IpPermission;
+use rusoto_ec2::IpRange;
+use rusoto_ec2::RevokeSecurityGroupIngressRequest;
+use rusoto_ec2::SecurityGroup;
+use std::collections::HashSet;
+use std::fmt;
+use std::rc::Rc;
+use std::str::FromStr;
+
+pub struct AwsFirewall {
+    id: String,
+    name: String,
+    client: Rc<Ec2>,
+}
+
+impl AwsFirewall {
+    pub fn list(client: &Rc<Ec2>, filter: &Filter) -> Result<Vec<AwsFirewall>> {
+        let req = DescribeSecurityGroupsRequest {
+            filters: Some(vec![filter.clone()]),
+            ..Default::default()
+        };
+        let resp = client
+            .describe_security_groups(&req)
+            .chain_err(|| format!("failed to describe security groups: {:?}", req))?;
+        let mut values: Vec<AwsFirewall> = Vec::new();
+        for sg in resp.security_groups.unwrap() {
+            let value = AwsFirewall {
+                id: sg.group_id.unwrap(),
+                name: sg.group_name.unwrap(),
+                client: client.clone(),
+            };
+            values.push(value);
+        }
+        Ok(values)
+    }
+
+    fn get_state(&self) -> Result<SecurityGroup> {
+        let req = DescribeSecurityGroupsRequest {
+            group_ids: Some(vec![self.id.clone()]),
+            ..Default::default()
+        };
+        let resp = self.client
+            .describe_security_groups(&req)
+            .chain_err(|| format!("failed to describe security group: {:?}", self))?;
+        resp.security_groups
+            .unwrap()
+            .into_iter()
+            .next()
+            .ok_or_else(|| format!("failed to find security group: {:?}", self).into())
+    }
+}
+
+impl fmt::Debug for AwsFirewall {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} ({})", self.name, self.id)
+    }
+}
+
+impl Firewall for AwsFirewall {
+    fn id(&self) -> &str {
+        &self.id
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn list_ingress_rules(&self) -> Result<HashSet<IpIngressRule>> {
+        let mut rules = HashSet::new();
+
+        let sg = self.get_state()?;
+        for ip_permission in sg.ip_permissions.unwrap() {
+            let ip_port_range = IpPortRange(
+                ip_permission.from_port.unwrap() as u16,
+                ip_permission.to_port.unwrap() as u16,
+            );
+            let ip_service = match ip_permission.ip_protocol.unwrap().as_ref() {
+                "tcp" => IpService::Tcp(ip_port_range),
+                "udp" => IpService::Udp(ip_port_range),
+                x => return Err(format!("unknown protocol: {}", x).into()),
+            };
+            for ip_range in ip_permission.ip_ranges.unwrap() {
+                let ip_cidr_str = &ip_range.cidr_ip.unwrap();
+                let ip_cidr = Ipv4Net::from_str(ip_cidr_str)
+                    .chain_err(|| format!("not a CIDR network: {}", ip_cidr_str))?;
+                rules.insert(IpIngressRule(ip_cidr, ip_service));
+            }
+        }
+
+        Ok(rules)
+    }
+
+    fn add_ingress_rules<'a, R>(&self, rules: R) -> Result<()>
+    where
+        R: IntoIterator<Item = &'a IpIngressRule>,
+    {
+        let ip_permissions: Vec<IpPermission> = rules.into_iter().map(to_ip_permission).collect();
+        if ip_permissions.is_empty() {
+            return Ok(());
+        }
+        let req = AuthorizeSecurityGroupIngressRequest {
+            group_id: Some(self.id.clone()),
+            ip_permissions: Some(ip_permissions),
+            ..Default::default()
+        };
+        self.client
+            .authorize_security_group_ingress(&req)
+            .chain_err(|| {
+                format!(
+                    "failed to authorize ingress for security group: {}",
+                    self.name
+                )
+            })?;
+        Ok(())
+    }
+
+    fn remove_ingress_rules<'a, R>(&self, rules: R) -> Result<()>
+    where
+        R: IntoIterator<Item = &'a IpIngressRule>,
+    {
+        let ip_permissions: Vec<IpPermission> = rules.into_iter().map(to_ip_permission).collect();
+        if ip_permissions.is_empty() {
+            return Ok(());
+        }
+        let req = RevokeSecurityGroupIngressRequest {
+            group_id: Some(self.id.clone()),
+            ip_permissions: Some(ip_permissions),
+            ..Default::default()
+        };
+        self.client
+            .revoke_security_group_ingress(&req)
+            .chain_err(|| format!("failed to revoke ingress for security group: {}", self.name))?;
+        Ok(())
+    }
+}
+
+fn to_ip_permission(rule: &IpIngressRule) -> IpPermission {
+    let &IpIngressRule(ref ip_cidr, ref ip_service) = rule;
+    let (ip_protocol, from_port, to_port) = match ip_service {
+        &IpService::Tcp(IpPortRange(from, to)) => ("tcp", from, to),
+        &IpService::Udp(IpPortRange(from, to)) => ("udp", from, to),
+    };
+    let ip_range = IpRange {
+        cidr_ip: Some(ip_cidr.to_string()),
+    };
+    IpPermission {
+        ip_protocol: Some(ip_protocol.to_owned()),
+        from_port: Some(from_port.into()),
+        to_port: Some(to_port.into()),
+        ip_ranges: Some(vec![ip_range]),
+        ipv_6_ranges: None,
+        prefix_list_ids: None,
+        user_id_group_pairs: None,
+    }
+}

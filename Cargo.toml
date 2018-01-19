@@ -6,3 +6,6 @@ authors = ["Ben Challenor <ben@challenor.org>"]
 [dependencies]
 error-chain = "0.11.0"
 ipnet = "1.0.0"
+rusoto_core = "0.30.0"
+rusoto_ec2 = "0.30.0"
+rusoto_route53 = "0.30.0"

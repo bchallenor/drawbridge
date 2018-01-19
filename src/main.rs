@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate error_chain;
 extern crate ipnet;
+extern crate rusoto_core;
+extern crate rusoto_ec2;
+extern crate rusoto_route53;
 
 mod cloud;
 mod dns;

@@ -1,3 +1,4 @@
+pub mod aws;
 pub mod mem;
 
 use errors::*;
