@@ -1,4 +1,5 @@
 use ipnet::Ipv4Net;
+use std::error::Error;
 use std::fmt;
 use std::result;
 use std::str;
@@ -25,6 +26,18 @@ impl fmt::Debug for IpPortRange {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct ParseIpPortRangeError(());
+
+impl Error for ParseIpPortRangeError {
+    fn description(&self) -> &str {
+        "invalid IP port range"
+    }
+}
+
+impl fmt::Display for ParseIpPortRangeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
+    }
+}
 
 impl str::FromStr for IpPortRange {
     type Err = ParseIpPortRangeError;
@@ -64,6 +77,18 @@ impl fmt::Debug for IpService {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct ParseIpServiceError(());
+
+impl Error for ParseIpServiceError {
+    fn description(&self) -> &str {
+        "invalid IP service"
+    }
+}
+
+impl fmt::Display for ParseIpServiceError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
+    }
+}
 
 impl str::FromStr for IpService {
     type Err = ParseIpServiceError;
