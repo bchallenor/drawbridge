@@ -4,6 +4,7 @@ mod instance;
 use cloud::Cloud;
 use cloud::Firewall;
 use cloud::Instance;
+use cloud::InstanceType;
 pub use cloud::mem::firewall::MemFirewall;
 pub use cloud::mem::instance::MemInstance;
 use errors::*;
@@ -46,12 +47,18 @@ impl MemCloud {
         Ok(value)
     }
 
-    pub fn create_instance(&self, name: &str, fqdn: Option<&str>) -> Result<MemInstance> {
+    pub fn create_instance(
+        &self,
+        name: &str,
+        fqdn: Option<&str>,
+        instance_type: &InstanceType,
+    ) -> Result<MemInstance> {
         let mut state = self.state.borrow_mut();
         let value = MemInstance::new(
             state.fresh_id()?,
             name.to_owned(),
             fqdn.map(|x| x.to_owned()),
+            instance_type.clone(),
             state.fresh_ip_addr()?,
         )?;
         state.instances.insert(value.id().to_owned(), value.clone());

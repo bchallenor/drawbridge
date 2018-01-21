@@ -32,7 +32,9 @@ pub trait Instance: fmt::Debug {
     fn id(&self) -> &str;
     fn name(&self) -> &str;
     fn fqdn(&self) -> Option<&str>;
-    fn ensure_running(&self, instance_type: &InstanceType) -> Result<InstanceRunningState>;
+    // requires the instance to be stopped
+    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<()>;
+    fn ensure_running(&self) -> Result<InstanceRunningState>;
     fn ensure_stopped(&self) -> Result<()>;
 }
 

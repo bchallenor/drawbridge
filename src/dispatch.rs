@@ -10,11 +10,12 @@ use iprules::IpIngressRule;
 use iprules::IpService;
 use std::collections::HashSet;
 
+#[derive(Debug)]
 pub enum Command {
     Start {
-        instance_type: InstanceType,
         ip_cidrs: Vec<Ipv4Net>,
         ip_services: Vec<IpService>,
+        instance_type: Option<InstanceType>,
     },
     Stop,
 }
@@ -69,7 +70,10 @@ where
             Command::Start {
                 ref instance_type, ..
             } => {
-                let state = instance.ensure_running(instance_type)?;
+                if let &Some(ref instance_type) = instance_type {
+                    instance.try_ensure_instance_type(instance_type)?;
+                }
+                let state = instance.ensure_running()?;
                 println!(
                     "Instance running with type: {} and IP address: {}",
                     state.instance_type, state.ip_addr
@@ -153,7 +157,7 @@ mod tests {
         let dns = MemDns::new()?;
 
         let cmd = Command::Start {
-            instance_type: InstanceType("t2.medium".to_owned()),
+            instance_type: None,
             ip_cidrs: ip_cidrs.to_vec(),
             ip_services: ip_services.to_vec(),
         };
@@ -177,11 +181,25 @@ mod tests {
     fn test_start_instance_that_is_stopped() {
         test_start_instance(
             |cloud| {
-                let inst = cloud.create_instance("inst", None)?;
+                let inst =
+                    cloud.create_instance("inst", None, &InstanceType("t2.medium".to_owned()))?;
                 inst.ensure_stopped()?;
                 Ok(inst)
             },
-            InstanceType("t2.medium".to_owned()),
+            None,
+        ).unwrap();
+    }
+
+    #[test]
+    fn test_start_instance_that_is_stopped_with_other_instance_type() {
+        test_start_instance(
+            |cloud| {
+                let inst =
+                    cloud.create_instance("inst", None, &InstanceType("t2.medium".to_owned()))?;
+                inst.ensure_stopped()?;
+                Ok(inst)
+            },
+            Some(InstanceType("t2.large".to_owned())),
         ).unwrap();
     }
 
@@ -189,27 +207,36 @@ mod tests {
     fn test_start_instance_that_is_already_started() {
         test_start_instance(
             |cloud| {
-                let inst = cloud.create_instance("inst", None)?;
-                inst.ensure_running(&InstanceType("t2.medium".to_owned()))?;
+                let inst =
+                    cloud.create_instance("inst", None, &InstanceType("t2.medium".to_owned()))?;
+                inst.ensure_running()?;
                 Ok(inst)
             },
-            InstanceType("t2.medium".to_owned()),
+            None,
         ).unwrap();
     }
 
     #[test]
     fn test_start_instance_that_is_already_started_with_other_instance_type() {
-        test_start_instance(
+        let err = test_start_instance(
             |cloud| {
-                let inst = cloud.create_instance("inst", None)?;
-                inst.ensure_running(&InstanceType("t2.medium".to_owned()))?;
+                let inst =
+                    cloud.create_instance("inst", None, &InstanceType("t2.medium".to_owned()))?;
+                inst.ensure_running()?;
                 Ok(inst)
             },
-            InstanceType("t2.large".to_owned()),
-        ).unwrap();
+            Some(InstanceType("t2.large".to_owned())),
+        ).unwrap_err();
+        assert_eq!(
+            "instance must be stopped to change its type",
+            err.description()
+        );
     }
 
-    fn test_start_instance<F>(instance_builder: F, instance_type: InstanceType) -> Result<()>
+    fn test_start_instance<F>(
+        instance_builder: F,
+        instance_type: Option<InstanceType>,
+    ) -> Result<()>
     where
         F: FnOnce(&MemCloud) -> Result<MemInstance>,
     {
@@ -229,7 +256,9 @@ mod tests {
 
         let running_state = inst.try_get_running_state()?;
         assert_eq!(true, running_state.is_some()); // i.e. running
-        assert_eq!(instance_type, running_state.unwrap().instance_type);
+        if let &Some(ref instance_type) = &instance_type {
+            assert_eq!(*instance_type, running_state.unwrap().instance_type);
+        }
 
         // test that stop command stops the instance, and that it is idempotent
         for _ in 0..2 {
@@ -277,7 +306,11 @@ mod tests {
 
     fn test_bind_dns(inst_fqdn: &str, zone_fqdn: &str, other_zone_fqdns: &[&str]) -> Result<()> {
         let cloud = MemCloud::new()?;
-        let inst = cloud.create_instance("inst", Some(inst_fqdn))?;
+        let inst = cloud.create_instance(
+            "inst",
+            Some(inst_fqdn),
+            &InstanceType("t2.medium".to_owned()),
+        )?;
 
         let dns = MemDns::new()?;
         let zone = dns.create_dns_zone(zone_fqdn)?;
@@ -287,7 +320,7 @@ mod tests {
             .collect::<Result<Vec<_>>>()?;
 
         let cmd = Command::Start {
-            instance_type: InstanceType("t2.medium".to_owned()),
+            instance_type: None,
             ip_cidrs: vec![],
             ip_services: vec![],
         };

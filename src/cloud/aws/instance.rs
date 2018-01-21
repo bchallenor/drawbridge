@@ -145,35 +145,38 @@ impl Instance for AwsInstance {
         self.fqdn.as_ref().map(String::as_ref)
     }
 
-    fn ensure_running(&self, instance_type: &InstanceType) -> Result<InstanceRunningState> {
+    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<()> {
+        let state = self.get_state()?;
+        println!("Instance state: {:?}", state);
+        if state.instance_type == *instance_type {
+            Ok(())
+        } else if state.instance_state_code == InstanceStateCode::Stopped {
+            self.change_instance_type(instance_type)?;
+            Ok(())
+        } else {
+            Err("instance must be stopped to change its type".into())
+        }
+    }
+
+    fn ensure_running(&self) -> Result<InstanceRunningState> {
         loop {
             let state = self.get_state()?;
             println!("Instance state: {:?}", state);
             match state.instance_state_code {
                 InstanceStateCode::Pending | InstanceStateCode::Stopping => (),
                 InstanceStateCode::Running => {
-                    if state.instance_type != *instance_type {
-                        // instance type can only be changed when stopped
-                        self.request_stop()?;
-                    } else {
-                        let ip_addr = state.ip_addr.ok_or_else(|| {
-                            Error::from(format!(
-                                "expected running instance to have IP address: {:?}",
-                                state
-                            ))
-                        })?;
-                        return Ok(InstanceRunningState {
-                            instance_type: state.instance_type,
-                            ip_addr,
-                        });
-                    }
+                    let ip_addr = state.ip_addr.ok_or_else(|| {
+                        Error::from(format!(
+                            "expected running instance to have IP address: {:?}",
+                            state
+                        ))
+                    })?;
+                    return Ok(InstanceRunningState {
+                        instance_type: state.instance_type,
+                        ip_addr,
+                    });
                 }
-                InstanceStateCode::Stopped => {
-                    if state.instance_type != *instance_type {
-                        self.change_instance_type(instance_type)?;
-                    }
-                    self.request_start()?;
-                }
+                InstanceStateCode::Stopped => self.request_start()?,
                 InstanceStateCode::Terminating => bail!("instance is terminating"),
                 InstanceStateCode::Terminated => bail!("instance is terminated"),
                 InstanceStateCode::Unknown(x) => bail!("instance is in unknown state: {}", x),

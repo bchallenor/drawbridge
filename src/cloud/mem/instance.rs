@@ -12,12 +12,13 @@ pub struct MemInstance {
     id: String,
     name: String,
     fqdn: Option<String>,
-    ip_addr_when_running: Ipv4Addr,
     state: Rc<RefCell<MemInstanceState>>,
 }
 
 struct MemInstanceState {
-    running_state: Option<InstanceRunningState>,
+    instance_type: InstanceType,
+    ip_addr: Ipv4Addr,
+    is_running: bool,
 }
 
 impl MemInstance {
@@ -25,22 +26,31 @@ impl MemInstance {
         id: String,
         name: String,
         fqdn: Option<String>,
-        ip_addr_when_running: Ipv4Addr,
+        instance_type: InstanceType,
+        ip_addr: Ipv4Addr,
     ) -> Result<MemInstance> {
         Ok(MemInstance {
             id,
             name,
             fqdn,
-            ip_addr_when_running,
             state: Rc::new(RefCell::new(MemInstanceState {
-                running_state: None,
+                instance_type,
+                ip_addr,
+                is_running: false,
             })),
         })
     }
 
     pub fn try_get_running_state(&self) -> Result<Option<InstanceRunningState>> {
         let state = self.state.borrow();
-        Ok(state.running_state.clone())
+        if state.is_running {
+            Ok(Some(InstanceRunningState {
+                instance_type: state.instance_type.clone(),
+                ip_addr: state.ip_addr,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -63,19 +73,31 @@ impl Instance for MemInstance {
         self.fqdn.as_ref().map(String::as_ref)
     }
 
-    fn ensure_running(&self, instance_type: &InstanceType) -> Result<InstanceRunningState> {
+    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<()> {
+        let mut state = self.state.borrow_mut();
+        if state.instance_type == *instance_type {
+            Ok(())
+        } else if !state.is_running {
+            state.instance_type = instance_type.clone();
+            Ok(())
+        } else {
+            Err("instance must be stopped to change its type".into())
+        }
+    }
+
+    fn ensure_running(&self) -> Result<InstanceRunningState> {
         let mut state = self.state.borrow_mut();
         let running_state = InstanceRunningState {
-            instance_type: instance_type.clone(),
-            ip_addr: self.ip_addr_when_running,
+            instance_type: state.instance_type.clone(),
+            ip_addr: state.ip_addr,
         };
-        state.running_state = Some(running_state.clone()); // TODO: all the clones!
+        state.is_running = true;
         Ok(running_state)
     }
 
     fn ensure_stopped(&self) -> Result<()> {
         let mut state = self.state.borrow_mut();
-        state.running_state = None;
+        state.is_running = false;
         Ok(())
     }
 }

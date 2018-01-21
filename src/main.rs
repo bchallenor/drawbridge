@@ -44,9 +44,9 @@ fn run() -> Result<()> {
             ];
 
             Command::Start {
-                instance_type,
                 ip_cidrs,
                 ip_services,
+                instance_type: Some(instance_type),
             }
         }
         None => Command::Stop,
