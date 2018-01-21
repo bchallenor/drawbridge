@@ -7,6 +7,7 @@ authors = ["Ben Challenor <ben@challenor.org>"]
 lto = true
 
 [dependencies]
+clap = "2.29.2"
 error-chain = "0.11.0"
 ipnet = "1.0.0"
 openssl-probe = "0.1.2"
