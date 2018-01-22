@@ -39,7 +39,13 @@ pub trait Instance: fmt::Debug {
 }
 
 #[derive(Clone, Hash, PartialEq, Eq)]
-pub struct InstanceType(pub String);
+pub struct InstanceType(String);
+
+impl InstanceType {
+    pub fn new<S: Into<String>>(s: S) -> InstanceType {
+        InstanceType(s.into())
+    }
+}
 
 impl fmt::Display for InstanceType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

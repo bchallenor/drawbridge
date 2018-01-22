@@ -90,7 +90,7 @@ fn run() -> Result<()> {
 
         let instance_type = matches
             .value_of("instance-type")
-            .map(|x| InstanceType(x.to_owned()));
+            .map(|x| InstanceType::new(x));
 
         Command::Start {
             ip_protocols,

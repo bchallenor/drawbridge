@@ -181,8 +181,7 @@ mod tests {
     fn test_start_instance_that_is_stopped() {
         test_start_instance(
             |cloud| {
-                let inst =
-                    cloud.create_instance("inst", None, &InstanceType("t2.medium".to_owned()))?;
+                let inst = cloud.create_instance("inst", None, &InstanceType::new("t2.medium"))?;
                 inst.ensure_stopped()?;
                 Ok(inst)
             },
@@ -194,12 +193,11 @@ mod tests {
     fn test_start_instance_that_is_stopped_with_other_instance_type() {
         test_start_instance(
             |cloud| {
-                let inst =
-                    cloud.create_instance("inst", None, &InstanceType("t2.medium".to_owned()))?;
+                let inst = cloud.create_instance("inst", None, &InstanceType::new("t2.medium"))?;
                 inst.ensure_stopped()?;
                 Ok(inst)
             },
-            Some(InstanceType("t2.large".to_owned())),
+            Some(InstanceType::new("t2.large")),
         ).unwrap();
     }
 
@@ -207,8 +205,7 @@ mod tests {
     fn test_start_instance_that_is_already_started() {
         test_start_instance(
             |cloud| {
-                let inst =
-                    cloud.create_instance("inst", None, &InstanceType("t2.medium".to_owned()))?;
+                let inst = cloud.create_instance("inst", None, &InstanceType::new("t2.medium"))?;
                 inst.ensure_running()?;
                 Ok(inst)
             },
@@ -220,12 +217,11 @@ mod tests {
     fn test_start_instance_that_is_already_started_with_other_instance_type() {
         let err = test_start_instance(
             |cloud| {
-                let inst =
-                    cloud.create_instance("inst", None, &InstanceType("t2.medium".to_owned()))?;
+                let inst = cloud.create_instance("inst", None, &InstanceType::new("t2.medium"))?;
                 inst.ensure_running()?;
                 Ok(inst)
             },
-            Some(InstanceType("t2.large".to_owned())),
+            Some(InstanceType::new("t2.large")),
         ).unwrap_err();
         assert_eq!(
             "instance must be stopped to change its type",
@@ -306,11 +302,7 @@ mod tests {
 
     fn test_bind_dns(inst_fqdn: &str, zone_fqdn: &str, other_zone_fqdns: &[&str]) -> Result<()> {
         let cloud = MemCloud::new()?;
-        let inst = cloud.create_instance(
-            "inst",
-            Some(inst_fqdn),
-            &InstanceType("t2.medium".to_owned()),
-        )?;
+        let inst = cloud.create_instance("inst", Some(inst_fqdn), &InstanceType::new("t2.medium"))?;
 
         let dns = MemDns::new()?;
         let zone = dns.create_dns_zone(zone_fqdn)?;
