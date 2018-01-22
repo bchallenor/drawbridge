@@ -25,6 +25,7 @@ use dns::aws::AwsDns;
 use errors::*;
 use ipnet::Ipv4Net;
 use iprules::IpProtocol;
+use std::net::Ipv4Addr;
 use std::str::FromStr;
 
 quick_main!(run);
@@ -85,7 +86,15 @@ fn run() -> Result<()> {
         let ip_cidrs = matches
             .values_of("source")
             .expect("required")
-            .map(|x| Ipv4Net::from_str(&x).chain_err(|| format!("not a CIDR network: {}", &x)))
+            .map(|x| {
+                if x.contains('/') {
+                    Ipv4Net::from_str(&x).chain_err(|| format!("not an IP network: {}", &x))
+                } else {
+                    Ipv4Addr::from_str(&x)
+                        .chain_err(|| format!("not an IP address: {}", &x))
+                        .map(|addr| Ipv4Net::new(addr, 32).expect("32 is OK"))
+                }
+            })
             .collect::<Result<Vec<_>>>()?;
 
         let instance_type = matches
