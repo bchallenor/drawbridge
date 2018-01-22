@@ -25,6 +25,8 @@ where
     C: Cloud,
     D: Dns,
 {
+    println!("Running command: {:?}", cmd);
+
     let fws = cloud.list_firewalls()?;
     println!("Found firewalls: {:?}", fws);
 
