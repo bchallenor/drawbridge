@@ -89,7 +89,19 @@ fn run() -> Result<()> {
         let ip_protocols = matches
             .values_of("protocol")
             .expect("required")
-            .map(|x| IpProtocol::from_str(x).chain_err(|| format!("not a protocol: {}", x)))
+            .map(|x| {
+                let y = match x {
+                    "ssh" => "22/tcp",
+                    "mosh" => "60000-61000/udp",
+                    "http" => "80/tcp",
+                    "https" => "443/tcp",
+                    x => x,
+                };
+                if y != x {
+                    println!("Substituted: {} -> {}", x, y);
+                }
+                IpProtocol::from_str(y).chain_err(|| format!("not a protocol: {}", y))
+            })
             .collect::<Result<Vec<_>>>()?;
 
         let include_own_ip_addr = matches
