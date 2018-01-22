@@ -7,14 +7,14 @@ use dns::DnsZone;
 use errors::*;
 use ipnet::Ipv4Net;
 use iprules::IpIngressRule;
-use iprules::IpService;
+use iprules::IpProtocol;
 use std::collections::HashSet;
 
 #[derive(Debug)]
 pub enum Command {
     Start {
         ip_cidrs: Vec<Ipv4Net>,
-        ip_services: Vec<IpService>,
+        ip_protocols: Vec<IpProtocol>,
         instance_type: Option<InstanceType>,
     },
     Stop,
@@ -34,13 +34,13 @@ where
     let desired_rules = match cmd {
         Command::Start {
             ref ip_cidrs,
-            ref ip_services,
+            ref ip_protocols,
             ..
         } => {
             let mut ip_rules = HashSet::new();
             for ip_cidr in ip_cidrs {
-                for ip_service in ip_services {
-                    ip_rules.insert(IpIngressRule(*ip_cidr, *ip_service));
+                for ip_protocol in ip_protocols {
+                    ip_rules.insert(IpIngressRule(*ip_cidr, *ip_protocol));
                 }
             }
             ip_rules
@@ -126,7 +126,7 @@ mod tests {
     fn test_open_firewall_with_some_existing_rules() {
         test_open_firewall(
             &[
-                // wrong service: will be removed
+                // wrong protocol: will be removed
                 IpIngressRule("9.9.9.9/32".parse().unwrap(), "443/tcp".parse().unwrap()),
                 // wrong CIDR: will be removed
                 IpIngressRule("1.1.1.1/32".parse().unwrap(), "80/tcp".parse().unwrap()),
@@ -141,12 +141,12 @@ mod tests {
     fn test_open_firewall(
         existing_rules: &[IpIngressRule],
         ip_cidrs: &[Ipv4Net],
-        ip_services: &[IpService],
+        ip_protocols: &[IpProtocol],
     ) -> Result<()> {
         let mut expected_rules = HashSet::new();
         for ip_cidr in ip_cidrs {
-            for ip_service in ip_services {
-                expected_rules.insert(IpIngressRule(*ip_cidr, *ip_service));
+            for ip_protocol in ip_protocols {
+                expected_rules.insert(IpIngressRule(*ip_cidr, *ip_protocol));
             }
         }
 
@@ -159,7 +159,7 @@ mod tests {
         let cmd = Command::Start {
             instance_type: None,
             ip_cidrs: ip_cidrs.to_vec(),
-            ip_services: ip_services.to_vec(),
+            ip_protocols: ip_protocols.to_vec(),
         };
 
         // test that start command opens the firewall
@@ -248,7 +248,7 @@ mod tests {
         let cmd = Command::Start {
             instance_type: instance_type.clone(),
             ip_cidrs: vec![],
-            ip_services: vec![],
+            ip_protocols: vec![],
         };
 
         // test that start command starts the instance
@@ -322,7 +322,7 @@ mod tests {
         let cmd = Command::Start {
             instance_type: None,
             ip_cidrs: vec![],
-            ip_services: vec![],
+            ip_protocols: vec![],
         };
 
         // test that start command binds the DNS

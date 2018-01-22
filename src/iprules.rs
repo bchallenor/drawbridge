@@ -55,71 +55,71 @@ impl str::FromStr for IpPortRange {
 }
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
-pub enum IpService {
+pub enum IpProtocol {
     Tcp(IpPortRange),
     Udp(IpPortRange),
 }
 
-impl fmt::Display for IpService {
+impl fmt::Display for IpProtocol {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &IpService::Tcp(ref range) => write!(f, "{}/tcp", range),
-            &IpService::Udp(ref range) => write!(f, "{}/udp", range),
+            &IpProtocol::Tcp(ref range) => write!(f, "{}/tcp", range),
+            &IpProtocol::Udp(ref range) => write!(f, "{}/udp", range),
         }
     }
 }
 
-impl fmt::Debug for IpService {
+impl fmt::Debug for IpProtocol {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(self, f)
     }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct ParseIpServiceError(());
+pub struct ParseIpProtocolError(());
 
-impl Error for ParseIpServiceError {
+impl Error for ParseIpProtocolError {
     fn description(&self) -> &str {
-        "invalid IP service"
+        "invalid IP protocol"
     }
 }
 
-impl fmt::Display for ParseIpServiceError {
+impl fmt::Display for ParseIpProtocolError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.description())
     }
 }
 
-impl str::FromStr for IpService {
-    type Err = ParseIpServiceError;
+impl str::FromStr for IpProtocol {
+    type Err = ParseIpProtocolError;
 
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
         let parts = s.split('/').collect::<Vec<_>>();
         if parts.len() == 2 {
             match parts[1] {
                 "tcp" => {
-                    let range = parts[0].parse().map_err(|_| ParseIpServiceError(()))?;
-                    Ok(IpService::Tcp(range))
+                    let range = parts[0].parse().map_err(|_| ParseIpProtocolError(()))?;
+                    Ok(IpProtocol::Tcp(range))
                 }
                 "udp" => {
-                    let range = parts[0].parse().map_err(|_| ParseIpServiceError(()))?;
-                    Ok(IpService::Udp(range))
+                    let range = parts[0].parse().map_err(|_| ParseIpProtocolError(()))?;
+                    Ok(IpProtocol::Udp(range))
                 }
-                _ => Err(ParseIpServiceError(())),
+                _ => Err(ParseIpProtocolError(())),
             }
         } else {
-            Err(ParseIpServiceError(()))
+            Err(ParseIpProtocolError(()))
         }
     }
 }
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
-pub struct IpIngressRule(pub Ipv4Net, pub IpService);
+pub struct IpIngressRule(pub Ipv4Net, pub IpProtocol);
 
 impl fmt::Debug for IpIngressRule {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let &IpIngressRule(ref net, ref service) = self;
-        write!(f, "{} -> {}", service, net)
+        let &IpIngressRule(ref net, ref protocol) = self;
+        write!(f, "{} -> {}", protocol, net)
     }
 }
 
@@ -135,14 +135,14 @@ mod tests {
     }
 
     #[test]
-    fn test_service_display_and_parse() {
-        test_display_and_parse(IpService::Tcp(IpPortRange(1, 1)), "1/tcp");
-        test_display_and_parse(IpService::Tcp(IpPortRange(1, 10)), "1-10/tcp");
-        test_display_and_parse(IpService::Tcp(IpPortRange(1, 65_535)), "1-65535/tcp");
+    fn test_protocol_display_and_parse() {
+        test_display_and_parse(IpProtocol::Tcp(IpPortRange(1, 1)), "1/tcp");
+        test_display_and_parse(IpProtocol::Tcp(IpPortRange(1, 10)), "1-10/tcp");
+        test_display_and_parse(IpProtocol::Tcp(IpPortRange(1, 65_535)), "1-65535/tcp");
 
-        test_display_and_parse(IpService::Udp(IpPortRange(1, 1)), "1/udp");
-        test_display_and_parse(IpService::Udp(IpPortRange(1, 10)), "1-10/udp");
-        test_display_and_parse(IpService::Udp(IpPortRange(1, 65_535)), "1-65535/udp");
+        test_display_and_parse(IpProtocol::Udp(IpPortRange(1, 1)), "1/udp");
+        test_display_and_parse(IpProtocol::Udp(IpPortRange(1, 10)), "1-10/udp");
+        test_display_and_parse(IpProtocol::Udp(IpPortRange(1, 65_535)), "1-65535/udp");
     }
 
     fn test_display_and_parse<V>(v: V, s: &str)

@@ -24,7 +24,7 @@ use dispatch::dispatch;
 use dns::aws::AwsDns;
 use errors::*;
 use ipnet::Ipv4Net;
-use iprules::IpService;
+use iprules::IpProtocol;
 use std::str::FromStr;
 
 quick_main!(run);
@@ -76,10 +76,10 @@ fn run() -> Result<()> {
     let matches = app.get_matches();
 
     let cmd = if let Some(matches) = matches.subcommand_matches("open") {
-        let ip_services = matches
+        let ip_protocols = matches
             .values_of("protocol")
             .expect("required")
-            .map(|x| IpService::from_str(&x).chain_err(|| format!("not a protocol: {}", &x)))
+            .map(|x| IpProtocol::from_str(&x).chain_err(|| format!("not a protocol: {}", &x)))
             .collect::<Result<Vec<_>>>()?;
 
         let ip_cidrs = matches
@@ -93,7 +93,7 @@ fn run() -> Result<()> {
             .map(|x| InstanceType(x.to_owned()));
 
         Command::Start {
-            ip_services,
+            ip_protocols,
             ip_cidrs,
             instance_type,
         }

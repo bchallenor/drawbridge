@@ -3,7 +3,7 @@ use errors::*;
 use ipnet::Ipv4Net;
 use iprules::IpIngressRule;
 use iprules::IpPortRange;
-use iprules::IpService;
+use iprules::IpProtocol;
 use rusoto_ec2::AuthorizeSecurityGroupIngressRequest;
 use rusoto_ec2::DescribeSecurityGroupsRequest;
 use rusoto_ec2::Ec2;
@@ -84,16 +84,16 @@ impl Firewall for AwsFirewall {
                 ip_permission.from_port.unwrap() as u16,
                 ip_permission.to_port.unwrap() as u16,
             );
-            let ip_service = match ip_permission.ip_protocol.unwrap().as_ref() {
-                "tcp" => IpService::Tcp(ip_port_range),
-                "udp" => IpService::Udp(ip_port_range),
+            let ip_protocol = match ip_permission.ip_protocol.unwrap().as_ref() {
+                "tcp" => IpProtocol::Tcp(ip_port_range),
+                "udp" => IpProtocol::Udp(ip_port_range),
                 x => return Err(format!("unknown protocol: {}", x).into()),
             };
             for ip_range in ip_permission.ip_ranges.unwrap() {
                 let ip_cidr_str = &ip_range.cidr_ip.unwrap();
                 let ip_cidr = Ipv4Net::from_str(ip_cidr_str)
                     .chain_err(|| format!("not a CIDR network: {}", ip_cidr_str))?;
-                rules.insert(IpIngressRule(ip_cidr, ip_service));
+                rules.insert(IpIngressRule(ip_cidr, ip_protocol));
             }
         }
 
@@ -145,10 +145,10 @@ impl Firewall for AwsFirewall {
 }
 
 fn to_ip_permission(rule: &IpIngressRule) -> IpPermission {
-    let &IpIngressRule(ref ip_cidr, ref ip_service) = rule;
-    let (ip_protocol, from_port, to_port) = match ip_service {
-        &IpService::Tcp(IpPortRange(from, to)) => ("tcp", from, to),
-        &IpService::Udp(IpPortRange(from, to)) => ("udp", from, to),
+    let &IpIngressRule(ref ip_cidr, ref ip_protocol) = rule;
+    let (ip_protocol, from_port, to_port) = match ip_protocol {
+        &IpProtocol::Tcp(IpPortRange(from, to)) => ("tcp", from, to),
+        &IpProtocol::Udp(IpPortRange(from, to)) => ("udp", from, to),
     };
     let ip_range = IpRange {
         cidr_ip: Some(ip_cidr.to_string()),
