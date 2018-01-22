@@ -80,7 +80,7 @@ fn run() -> Result<()> {
         let ip_protocols = matches
             .values_of("protocol")
             .expect("required")
-            .map(|x| IpProtocol::from_str(&x).chain_err(|| format!("not a protocol: {}", &x)))
+            .map(|x| IpProtocol::from_str(x).chain_err(|| format!("not a protocol: {}", x)))
             .collect::<Result<Vec<_>>>()?;
 
         let ip_cidrs = matches
@@ -88,18 +88,16 @@ fn run() -> Result<()> {
             .expect("required")
             .map(|x| {
                 if x.contains('/') {
-                    Ipv4Net::from_str(&x).chain_err(|| format!("not an IP network: {}", &x))
+                    Ipv4Net::from_str(x).chain_err(|| format!("not an IP network: {}", x))
                 } else {
-                    Ipv4Addr::from_str(&x)
-                        .chain_err(|| format!("not an IP address: {}", &x))
+                    Ipv4Addr::from_str(x)
+                        .chain_err(|| format!("not an IP address: {}", x))
                         .map(|addr| Ipv4Net::new(addr, 32).expect("32 is OK"))
                 }
             })
             .collect::<Result<Vec<_>>>()?;
 
-        let instance_type = matches
-            .value_of("instance-type")
-            .map(|x| InstanceType::new(x));
+        let instance_type = matches.value_of("instance-type").map(InstanceType::new);
 
         Command::Start {
             ip_protocols,
