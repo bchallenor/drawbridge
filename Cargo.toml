@@ -9,8 +9,11 @@ lto = true
 [dependencies]
 clap = "2.29.2"
 error-chain = "0.11.0"
+futures = "0.1"
+hyper = "0.11"
 ipnet = "1.0.0"
 openssl-probe = "0.1.2"
 rusoto_core = "0.30.0"
 rusoto_ec2 = "0.30.0"
 rusoto_route53 = "0.30.0"
+tokio-core = "0.1"

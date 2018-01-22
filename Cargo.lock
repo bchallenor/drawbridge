@@ -154,11 +154,14 @@ version = "0.1.0"
 dependencies = [
  "clap 2.29.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyper 0.11.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "ipnet 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl-probe 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_core 0.30.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_ec2 0.30.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_route53 0.30.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio-core 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
