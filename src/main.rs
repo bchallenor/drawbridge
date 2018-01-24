@@ -44,6 +44,17 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
         .setting(AppSettings::DeriveDisplayOrder)
         .arg(
             Arg::with_name("protocol")
+                .help(
+                    "Protocol to allow through the firewall. Examples:\n\
+                     * ssh\n\
+                     * mosh\n\
+                     * http\n\
+                     * https\n\
+                     * 22/tcp\n\
+                     * 60000-61000/udp\n\
+                     ",
+                )
+                .next_line_help(true)
                 .short("p")
                 .long("protocol")
                 .takes_value(true)
@@ -52,6 +63,15 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
         )
         .arg(
             Arg::with_name("source")
+                .help(
+                    "Source IP address (or CIDR network) to allow through the firewall.\n\
+                     Examples:\n\
+                     * self (alias for your IPv4 address, as indicated by checkip.amazonaws.com)\n\
+                     * 192.0.2.1\n\
+                     * 192.0.2.0/24\n\
+                     ",
+                )
+                .next_line_help(true)
                 .short("s")
                 .long("source")
                 .takes_value(true)
@@ -60,6 +80,15 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
         )
         .arg(
             Arg::with_name("instance-type")
+                .help(
+                    "Desired instance type. Note that changing the instance type typically \
+                     requires the instance to be stopped. Examples:\n\
+                     * t2.nano\n\
+                     * m3.medium\n\
+                     * c5.large\n\
+                     ",
+                )
+                .next_line_help(true)
                 .short("t")
                 .long("instance-type")
                 .takes_value(true),
