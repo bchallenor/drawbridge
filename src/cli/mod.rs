@@ -10,10 +10,10 @@ use iprules::IpProtocol;
 
 #[derive(Debug)]
 pub enum Command {
-    Start {
+    Open {
         ip_cidrs: Vec<Ipv4Net>,
         ip_protocols: Vec<IpProtocol>,
         instance_type: Option<InstanceType>,
     },
-    Stop,
+    Close,
 }

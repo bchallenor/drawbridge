@@ -137,13 +137,13 @@ pub fn parse() -> Result<Command> {
 
         let instance_type = matches.value_of("instance-type").map(InstanceType::new);
 
-        Command::Start {
+        Command::Open {
             ip_protocols,
             ip_cidrs,
             instance_type,
         }
     } else if let Some(_matches) = matches.subcommand_matches("close") {
-        Command::Stop
+        Command::Close
     } else {
         unreachable!()
     };
