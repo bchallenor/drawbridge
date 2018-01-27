@@ -1,6 +1,8 @@
 use cloud::Firewall;
 use errors::*;
+use ipnet::IpNet;
 use ipnet::Ipv4Net;
+use ipnet::Ipv6Net;
 use iprules::IpIngressRule;
 use iprules::IpPortRange;
 use iprules::IpProtocol;
@@ -10,6 +12,7 @@ use rusoto_ec2::Ec2;
 use rusoto_ec2::Filter;
 use rusoto_ec2::IpPermission;
 use rusoto_ec2::IpRange;
+use rusoto_ec2::Ipv6Range;
 use rusoto_ec2::RevokeSecurityGroupIngressRequest;
 use rusoto_ec2::SecurityGroup;
 use std::collections::HashSet;
@@ -92,8 +95,14 @@ impl Firewall for AwsFirewall {
             for ip_range in ip_permission.ip_ranges.unwrap() {
                 let ip_cidr_str = &ip_range.cidr_ip.unwrap();
                 let ip_cidr = Ipv4Net::from_str(ip_cidr_str)
-                    .chain_err(|| format!("not a CIDR network: {}", ip_cidr_str))?;
-                rules.insert(IpIngressRule(ip_cidr, ip_protocol));
+                    .chain_err(|| format!("not an IPv4 network: {}", ip_cidr_str))?;
+                rules.insert(IpIngressRule(IpNet::V4(ip_cidr), ip_protocol));
+            }
+            for ip_range in ip_permission.ipv_6_ranges.unwrap() {
+                let ip_cidr_str = &ip_range.cidr_ipv_6.unwrap();
+                let ip_cidr = Ipv6Net::from_str(ip_cidr_str)
+                    .chain_err(|| format!("not an IPv6 network: {}", ip_cidr_str))?;
+                rules.insert(IpIngressRule(IpNet::V6(ip_cidr), ip_protocol));
             }
         }
 
@@ -150,15 +159,30 @@ fn to_ip_permission(rule: &IpIngressRule) -> IpPermission {
         &IpProtocol::Tcp(IpPortRange(from, to)) => ("tcp", from, to),
         &IpProtocol::Udp(IpPortRange(from, to)) => ("udp", from, to),
     };
-    let ip_range = IpRange {
-        cidr_ip: Some(ip_cidr.to_string()),
+    let (ip_ranges, ipv_6_ranges) = match *ip_cidr {
+        IpNet::V4(ipv4_cidr) => (
+            Some(vec![
+                IpRange {
+                    cidr_ip: Some(ipv4_cidr.to_string()),
+                },
+            ]),
+            None,
+        ),
+        IpNet::V6(ipv6_cidr) => (
+            None,
+            Some(vec![
+                Ipv6Range {
+                    cidr_ipv_6: Some(ipv6_cidr.to_string()),
+                },
+            ]),
+        ),
     };
     IpPermission {
         ip_protocol: Some(ip_protocol.to_owned()),
         from_port: Some(from_port.into()),
         to_port: Some(to_port.into()),
-        ip_ranges: Some(vec![ip_range]),
-        ipv_6_ranges: None,
+        ip_ranges: ip_ranges,
+        ipv_6_ranges: ipv_6_ranges,
         prefix_list_ids: None,
         user_id_group_pairs: None,
     }

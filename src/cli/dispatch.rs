@@ -101,7 +101,7 @@ mod tests {
     use cloud::mem::MemCloud;
     use cloud::mem::MemInstance;
     use dns::mem::MemDns;
-    use ipnet::Ipv4Net;
+    use ipnet::IpNet;
     use iprules::IpProtocol;
 
     // TODO(ques_in_main)
@@ -133,7 +133,7 @@ mod tests {
 
     fn test_open_firewall(
         existing_rules: &[IpIngressRule],
-        ip_cidrs: &[Ipv4Net],
+        ip_cidrs: &[IpNet],
         ip_protocols: &[IpProtocol],
     ) -> Result<()> {
         let mut expected_rules = HashSet::new();

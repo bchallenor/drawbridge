@@ -1,4 +1,4 @@
-use ipnet::Ipv4Net;
+use ipnet::IpNet;
 use std::error::Error;
 use std::fmt;
 use std::result;
@@ -114,7 +114,7 @@ impl str::FromStr for IpProtocol {
 }
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
-pub struct IpIngressRule(pub Ipv4Net, pub IpProtocol);
+pub struct IpIngressRule(pub IpNet, pub IpProtocol);
 
 impl fmt::Debug for IpIngressRule {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -10,9 +10,12 @@ use futures::Future;
 use futures::Stream;
 use hyper::Client;
 use hyper::StatusCode;
+use ipnet::IpNet;
 use ipnet::Ipv4Net;
+use ipnet::Ipv6Net;
 use iprules::IpProtocol;
 use std::ffi::OsString;
+use std::net::IpAddr;
 use std::net::Ipv4Addr;
 use std::str;
 use std::str::FromStr;
@@ -124,18 +127,25 @@ where
             .filter(|&x| x != "self")
             .map(|x| {
                 if x.contains('/') {
-                    Ipv4Net::from_str(x).chain_err(|| format!("not an IP network: {}", x))
+                    IpNet::from_str(x).chain_err(|| format!("not an IP network: {}", x))
                 } else {
-                    Ipv4Addr::from_str(x)
+                    IpAddr::from_str(x)
                         .chain_err(|| format!("not an IP address: {}", x))
-                        .map(|addr| Ipv4Net::new(addr, 32).expect("32 is OK"))
+                        .map(|addr| match addr {
+                            IpAddr::V4(addr) => {
+                                IpNet::V4(Ipv4Net::new(addr, 32).expect("32 is OK"))
+                            }
+                            IpAddr::V6(addr) => {
+                                IpNet::V6(Ipv6Net::new(addr, 128).expect("128 is OK"))
+                            }
+                        })
                 }
             })
             .collect::<Result<Vec<_>>>()?;
 
         if include_own_ip_addr {
             let own_ip_addr = find_own_ip_addr()?;
-            let own_ip_cidr = Ipv4Net::new(own_ip_addr, 32).expect("32 is OK");
+            let own_ip_cidr = IpNet::V4(Ipv4Net::new(own_ip_addr, 32).expect("32 is OK"));
             println!("Substituted: self -> {}", own_ip_cidr);
             ip_cidrs.push(own_ip_cidr);
         }
@@ -186,12 +196,17 @@ mod tests {
                 "--protocol",
                 "22/tcp",
                 "--source",
-                "1.1.1.1/32",
+                "1.1.1.1",
+                "--source",
+                "::ffff:1.1.1.1",
                 "--instance-type",
                 "m3.medium",
             ],
             Command::Open {
-                ip_cidrs: vec!["1.1.1.1/32".parse().unwrap()],
+                ip_cidrs: vec![
+                    "1.1.1.1/32".parse().unwrap(),
+                    "::ffff:1.1.1.1/128".parse().unwrap(),
+                ],
                 ip_protocols: vec!["22/tcp".parse().unwrap()],
                 instance_type: Some(InstanceType::new("m3.medium")),
             },
