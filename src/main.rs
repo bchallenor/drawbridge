@@ -19,6 +19,7 @@ mod iprules;
 use cloud::aws::AwsCloud;
 use dns::aws::AwsDns;
 use errors::*;
+use std::env;
 
 quick_main!(run);
 
@@ -26,9 +27,13 @@ fn run() -> Result<()> {
     // For e.g. Termux support on Android
     openssl_probe::init_ssl_cert_env_vars();
 
-    let cmd = cli::parse()?;
+    let cmd = match cli::parse_from_safe(env::args_os()) {
+        Ok(cmd) => cmd,
+        Err(Error(ErrorKind::Clap(err), _)) => err.exit(),
+        err => err?,
+    };
 
-    let profile_opt = std::env::var("DRAWBRIDGE_PROFILE").ok();
+    let profile_opt = env::var("DRAWBRIDGE_PROFILE").ok();
     let profile = profile_opt.as_ref().map_or("default", String::as_ref);
 
     let tag_key = "Drawbridge";

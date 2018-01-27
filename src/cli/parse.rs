@@ -12,6 +12,7 @@ use hyper::Client;
 use hyper::StatusCode;
 use ipnet::Ipv4Net;
 use iprules::IpProtocol;
+use std::ffi::OsString;
 use std::net::Ipv4Addr;
 use std::str;
 use std::str::FromStr;
@@ -85,9 +86,13 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
         .subcommand(close_command)
 }
 
-pub fn parse() -> Result<Command> {
+pub fn parse_from_safe<I, T>(args: I) -> Result<Command>
+where
+    I: IntoIterator<Item = T>,
+    T: Into<OsString> + Clone,
+{
     let app = define_app();
-    let matches = app.get_matches();
+    let matches = app.get_matches_from_safe(args)?;
 
     let cmd = if let Some(matches) = matches.subcommand_matches("open") {
         let ip_protocols = matches
@@ -166,4 +171,41 @@ fn find_own_ip_addr() -> Result<Ipv4Addr> {
     }
     Ipv4Addr::from_str(content.trim_right())
         .chain_err(|| format!("expected checkip to return IP address: {}", content))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_open() {
+        test_parse(
+            &[
+                "drawbridge",
+                "open",
+                "--protocol",
+                "22/tcp",
+                "--source",
+                "1.1.1.1/32",
+                "--instance-type",
+                "m3.medium",
+            ],
+            Command::Open {
+                ip_cidrs: vec!["1.1.1.1/32".parse().unwrap()],
+                ip_protocols: vec!["22/tcp".parse().unwrap()],
+                instance_type: Some(InstanceType::new("m3.medium")),
+            },
+        ).unwrap();
+    }
+
+    #[test]
+    fn test_parse_close() {
+        test_parse(&["drawbridge", "close"], Command::Close).unwrap();
+    }
+
+    fn test_parse(args: &[&str], cmd: Command) -> Result<()> {
+        let actual_cmd = parse_from_safe(args)?;
+        assert_eq!(cmd, actual_cmd);
+        Ok(())
+    }
 }
