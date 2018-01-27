@@ -1,24 +1,12 @@
+use cli::Command;
 use cloud::Cloud;
 use cloud::Firewall;
 use cloud::Instance;
-use cloud::InstanceType;
 use dns::Dns;
 use dns::DnsZone;
 use errors::*;
-use ipnet::Ipv4Net;
 use iprules::IpIngressRule;
-use iprules::IpProtocol;
 use std::collections::HashSet;
-
-#[derive(Debug)]
-pub enum Command {
-    Start {
-        ip_cidrs: Vec<Ipv4Net>,
-        ip_protocols: Vec<IpProtocol>,
-        instance_type: Option<InstanceType>,
-    },
-    Stop,
-}
 
 pub fn dispatch<C, D>(cmd: Command, cloud: &C, dns: &D) -> Result<()>
 where
@@ -109,9 +97,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cloud::InstanceType;
     use cloud::mem::MemCloud;
     use cloud::mem::MemInstance;
     use dns::mem::MemDns;
+    use ipnet::Ipv4Net;
+    use iprules::IpProtocol;
 
     // TODO(ques_in_main)
 
