@@ -17,7 +17,7 @@ mod iprules;
 
 use cloud::aws::AwsCloud;
 use dns::aws::AwsDns;
-use errors::*;
+use failure::Error;
 use std::env;
 
 quick_main!(run);

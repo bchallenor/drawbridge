@@ -4,7 +4,7 @@ use clap::Arg;
 use clap::SubCommand;
 use cli::Command;
 use cloud::InstanceType;
-use errors::*;
+use failure::Error;
 use futures;
 use futures::Future;
 use futures::Stream;

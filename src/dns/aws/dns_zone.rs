@@ -1,5 +1,5 @@
 use dns::DnsZone;
-use errors::*;
+use failure::Error;
 use rusoto_route53::Change;
 use rusoto_route53::ChangeBatch;
 use rusoto_route53::ChangeResourceRecordSetsRequest;

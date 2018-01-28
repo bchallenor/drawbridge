@@ -1,7 +1,7 @@
 pub mod aws;
 pub mod mem;
 
-use errors::*;
+use failure::Error;
 use iprules::IpIngressRule;
 use std::collections::HashSet;
 use std::fmt;

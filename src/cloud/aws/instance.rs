@@ -2,7 +2,7 @@ use cloud::Instance;
 use cloud::InstanceRunningState;
 use cloud::InstanceType;
 use cloud::aws::tags::TagFinder;
-use errors::*;
+use failure::Error;
 use rusoto_ec2::AttributeValue;
 use rusoto_ec2::DescribeInstancesRequest;
 use rusoto_ec2::Ec2;

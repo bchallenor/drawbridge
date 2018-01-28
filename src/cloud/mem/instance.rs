@@ -1,7 +1,7 @@
 use cloud::Instance;
 use cloud::InstanceRunningState;
 use cloud::InstanceType;
-use errors::*;
+use failure::Error;
 use std::cell::RefCell;
 use std::fmt;
 use std::net::Ipv4Addr;

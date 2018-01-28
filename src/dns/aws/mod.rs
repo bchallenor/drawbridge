@@ -1,6 +1,6 @@
 use dns::Dns;
 use dns::aws::dns_zone::AwsDnsZone;
-use errors::*;
+use failure::Error;
 use rusoto_core::DefaultCredentialsProvider;
 use rusoto_core::Region;
 use rusoto_core::default_tls_client;

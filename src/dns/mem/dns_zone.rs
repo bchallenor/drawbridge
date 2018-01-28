@@ -1,5 +1,5 @@
 use dns::DnsZone;
-use errors::*;
+use failure::Error;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;

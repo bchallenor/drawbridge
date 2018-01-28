@@ -1,7 +1,7 @@
 pub mod aws;
 pub mod mem;
 
-use errors::*;
+use failure::Error;
 use std::fmt;
 use std::net::Ipv4Addr;
 use std::str;

@@ -1,5 +1,5 @@
 use cloud::Firewall;
-use errors::*;
+use failure::Error;
 use ipnet::IpNet;
 use ipnet::Ipv4Net;
 use ipnet::Ipv6Net;

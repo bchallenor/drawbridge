@@ -7,7 +7,7 @@ use cloud::Instance;
 use cloud::InstanceType;
 pub use cloud::mem::firewall::MemFirewall;
 pub use cloud::mem::instance::MemInstance;
-use errors::*;
+use failure::Error;
 use ipnet::Ipv4AddrRange;
 use ipnet::Ipv4Net;
 use std::cell::RefCell;

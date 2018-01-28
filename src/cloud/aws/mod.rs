@@ -1,7 +1,7 @@
 use cloud::Cloud;
 use cloud::aws::firewall::AwsFirewall;
 use cloud::aws::instance::AwsInstance;
-use errors::*;
+use failure::Error;
 use rusoto_core::DefaultCredentialsProvider;
 use rusoto_core::Region;
 use rusoto_core::default_tls_client;

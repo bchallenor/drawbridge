@@ -1,5 +1,5 @@
 use cloud::Firewall;
-use errors::*;
+use failure::Error;
 use iprules::IpIngressRule;
 use std::cell::RefCell;
 use std::collections::HashSet;

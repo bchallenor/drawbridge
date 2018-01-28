@@ -3,7 +3,7 @@ mod dns_zone;
 use dns::Dns;
 use dns::DnsZone;
 pub use dns::mem::dns_zone::MemDnsZone;
-use errors::*;
+use failure::Error;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Range;

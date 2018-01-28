@@ -4,7 +4,7 @@ use cloud::Firewall;
 use cloud::Instance;
 use dns::Dns;
 use dns::DnsZone;
-use errors::*;
+use failure::Error;
 use iprules::IpIngressRule;
 use std::collections::HashSet;
 
