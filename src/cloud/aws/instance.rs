@@ -33,6 +33,7 @@ impl AwsInstance {
         };
         let resp = client
             .describe_instances(&req)
+            .sync()
             .with_context(|_e| format!("failed to describe instances: {:?}", req))?;
         let mut values: Vec<AwsInstance> = Vec::new();
         for r in resp.reservations.unwrap() {
@@ -61,6 +62,7 @@ impl AwsInstance {
         };
         let resp = self.client
             .describe_instances(&req)
+            .sync()
             .with_context(|_e| format!("failed to describe instance: {:?}", self))?;
         let i = resp.reservations
             .unwrap()
@@ -97,6 +99,7 @@ impl AwsInstance {
         };
         self.client
             .modify_instance_attribute(&req)
+            .sync()
             .with_context(|_e| {
                 format!(
                     "failed to change instance type to {}: {}",
@@ -113,6 +116,7 @@ impl AwsInstance {
         };
         self.client
             .start_instances(&req)
+            .sync()
             .with_context(|_e| format!("failed to start instance: {}", self.id))?;
         Ok(())
     }
@@ -124,6 +128,7 @@ impl AwsInstance {
         };
         self.client
             .stop_instances(&req)
+            .sync()
             .with_context(|_e| format!("failed to stop instance: {}", self.id))?;
         Ok(())
     }

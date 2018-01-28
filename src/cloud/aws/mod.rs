@@ -3,9 +3,7 @@ use cloud::aws::firewall::AwsFirewall;
 use cloud::aws::instance::AwsInstance;
 use failure::Error;
 use failure::ResultExt;
-use rusoto_core::DefaultCredentialsProvider;
 use rusoto_core::Region;
-use rusoto_core::default_tls_client;
 use rusoto_ec2::Ec2;
 use rusoto_ec2::Ec2Client;
 use rusoto_ec2::Filter;
@@ -24,11 +22,8 @@ pub struct AwsCloud {
 
 impl AwsCloud {
     pub fn new(tag_key: &str, tag_value: &str) -> Result<AwsCloud, Error> {
-        let provider =
-            DefaultCredentialsProvider::new().context("could not create credentials provider")?;
-        let tls_client = default_tls_client().context("could not create TLS client")?;
         let region = AwsCloud::default_region()?;
-        let ec2 = Ec2Client::new(tls_client, provider, region);
+        let ec2 = Ec2Client::simple(region);
         Ok(AwsCloud {
             client: Rc::new(ec2),
             filter: Filter {

@@ -26,6 +26,7 @@ impl AwsDnsZone {
         };
         let resp = client
             .list_hosted_zones(&req)
+            .sync()
             .with_context(|_e| format!("failed to list hosted zones: {:?}", req))?;
         let mut values = Vec::new();
         for hz in resp.hosted_zones {
@@ -90,6 +91,7 @@ impl AwsDnsZone {
         };
         let resp = self.client
             .list_resource_record_sets(&req)
+            .sync()
             .with_context(|_e| format!("failed to find existing DNS entry: {}", fqdn))?;
         Ok(resp.resource_record_sets.into_iter().next())
     }
@@ -110,6 +112,7 @@ impl AwsDnsZone {
         };
         self.client
             .change_resource_record_sets(&req)
+            .sync()
             .with_context(|_e| format!("failed to {} DNS entry: {}", action, fqdn))?;
         Ok(())
     }

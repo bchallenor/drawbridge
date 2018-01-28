@@ -35,6 +35,7 @@ impl AwsFirewall {
         };
         let resp = client
             .describe_security_groups(&req)
+            .sync()
             .with_context(|_e| format!("failed to describe security groups: {:?}", req))?;
         let mut values: Vec<AwsFirewall> = Vec::new();
         for sg in resp.security_groups.unwrap() {
@@ -55,6 +56,7 @@ impl AwsFirewall {
         };
         let resp = self.client
             .describe_security_groups(&req)
+            .sync()
             .with_context(|_e| format!("failed to describe security group: {:?}", self))?;
         resp.security_groups
             .unwrap()
@@ -125,6 +127,7 @@ impl Firewall for AwsFirewall {
         };
         self.client
             .authorize_security_group_ingress(&req)
+            .sync()
             .with_context(|_e| {
                 format!(
                     "failed to authorize ingress for security group: {}",
@@ -149,6 +152,7 @@ impl Firewall for AwsFirewall {
         };
         self.client
             .revoke_security_group_ingress(&req)
+            .sync()
             .with_context(|_e| {
                 format!("failed to revoke ingress for security group: {}", self.name)
             })?;
