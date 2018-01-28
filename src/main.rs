@@ -1,6 +1,6 @@
 extern crate clap;
 #[macro_use]
-extern crate error_chain;
+extern crate failure;
 extern crate futures;
 extern crate hyper;
 extern crate ipnet;
@@ -13,7 +13,6 @@ extern crate tokio_core;
 mod cli;
 mod cloud;
 mod dns;
-mod errors;
 mod iprules;
 
 use cloud::aws::AwsCloud;
