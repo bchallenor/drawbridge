@@ -164,6 +164,7 @@ fn to_ip_permission(rule: &IpIngressRule) -> IpPermission {
             Some(vec![
                 IpRange {
                     cidr_ip: Some(ipv4_cidr.to_string()),
+                    ..Default::default()
                 },
             ]),
             None,
@@ -173,6 +174,7 @@ fn to_ip_permission(rule: &IpIngressRule) -> IpPermission {
             Some(vec![
                 Ipv6Range {
                     cidr_ipv_6: Some(ipv6_cidr.to_string()),
+                    ..Default::default()
                 },
             ]),
         ),
