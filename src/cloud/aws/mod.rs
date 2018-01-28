@@ -21,7 +21,7 @@ pub struct AwsCloud {
 }
 
 impl AwsCloud {
-    pub fn new(tag_key: &str, tag_value: &str) -> Result<AwsCloud> {
+    pub fn new(tag_key: &str, tag_value: &str) -> Result<AwsCloud, Error> {
         let provider = DefaultCredentialsProvider::new()
             .chain_err(|| "could not create credentials provider")?;
         let tls_client = default_tls_client().chain_err(|| "could not create TLS client")?;
@@ -36,7 +36,7 @@ impl AwsCloud {
         })
     }
 
-    fn default_region() -> Result<Region> {
+    fn default_region() -> Result<Region, Error> {
         let region_str =
             env::var("AWS_DEFAULT_REGION").chain_err(|| "env var AWS_DEFAULT_REGION is not set")?;
         let region = region_str
@@ -50,11 +50,11 @@ impl Cloud for AwsCloud {
     type Firewall = AwsFirewall;
     type Instance = AwsInstance;
 
-    fn list_firewalls(&self) -> Result<Vec<AwsFirewall>> {
+    fn list_firewalls(&self) -> Result<Vec<AwsFirewall>, Error> {
         AwsFirewall::list(&self.client, &self.filter)
     }
 
-    fn list_instances(&self) -> Result<Vec<AwsInstance>> {
+    fn list_instances(&self) -> Result<Vec<AwsInstance>, Error> {
         AwsInstance::list(&self.client, &self.filter)
     }
 }

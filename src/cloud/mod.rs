@@ -12,18 +12,18 @@ pub trait Cloud {
     type Firewall: Firewall;
     type Instance: Instance;
 
-    fn list_firewalls(&self) -> Result<Vec<Self::Firewall>>;
-    fn list_instances(&self) -> Result<Vec<Self::Instance>>;
+    fn list_firewalls(&self) -> Result<Vec<Self::Firewall>, Error>;
+    fn list_instances(&self) -> Result<Vec<Self::Instance>, Error>;
 }
 
 pub trait Firewall: fmt::Debug {
     fn id(&self) -> &str;
     fn name(&self) -> &str;
-    fn list_ingress_rules(&self) -> Result<HashSet<IpIngressRule>>;
-    fn add_ingress_rules<'a, R>(&self, rules: R) -> Result<()>
+    fn list_ingress_rules(&self) -> Result<HashSet<IpIngressRule>, Error>;
+    fn add_ingress_rules<'a, R>(&self, rules: R) -> Result<(), Error>
     where
         R: IntoIterator<Item = &'a IpIngressRule>;
-    fn remove_ingress_rules<'a, R>(&self, rules: R) -> Result<()>
+    fn remove_ingress_rules<'a, R>(&self, rules: R) -> Result<(), Error>
     where
         R: IntoIterator<Item = &'a IpIngressRule>;
 }
@@ -33,9 +33,9 @@ pub trait Instance: fmt::Debug {
     fn name(&self) -> &str;
     fn fqdn(&self) -> Option<&str>;
     // requires the instance to be stopped
-    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<()>;
-    fn ensure_running(&self) -> Result<InstanceRunningState>;
-    fn ensure_stopped(&self) -> Result<()>;
+    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<(), Error>;
+    fn ensure_running(&self) -> Result<InstanceRunningState, Error>;
+    fn ensure_stopped(&self) -> Result<(), Error>;
 }
 
 #[derive(Clone, Hash, PartialEq, Eq)]

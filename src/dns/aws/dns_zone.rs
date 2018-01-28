@@ -19,7 +19,7 @@ pub struct AwsDnsZone {
 }
 
 impl AwsDnsZone {
-    pub(super) fn list(client: &Rc<Route53>) -> Result<Vec<AwsDnsZone>> {
+    pub(super) fn list(client: &Rc<Route53>) -> Result<Vec<AwsDnsZone>, Error> {
         let req = ListHostedZonesRequest {
             ..Default::default()
         };
@@ -54,7 +54,7 @@ impl DnsZone for AwsDnsZone {
         &self.name
     }
 
-    fn bind(&self, fqdn: &str, ip_addr: Ipv4Addr) -> Result<()> {
+    fn bind(&self, fqdn: &str, ip_addr: Ipv4Addr) -> Result<(), Error> {
         let desired = ResourceRecordSet {
             name: fqdn.to_owned(),
             resource_records: Some(vec![
@@ -70,7 +70,7 @@ impl DnsZone for AwsDnsZone {
         Ok(())
     }
 
-    fn unbind(&self, fqdn: &str) -> Result<()> {
+    fn unbind(&self, fqdn: &str) -> Result<(), Error> {
         if let Some(existing) = self.find_record_set(fqdn, "A")? {
             self.change_record_set("DELETE", existing)?;
         }
@@ -79,7 +79,7 @@ impl DnsZone for AwsDnsZone {
 }
 
 impl AwsDnsZone {
-    fn find_record_set(&self, fqdn: &str, type_: &str) -> Result<Option<ResourceRecordSet>> {
+    fn find_record_set(&self, fqdn: &str, type_: &str) -> Result<Option<ResourceRecordSet>, Error> {
         let req = ListResourceRecordSetsRequest {
             hosted_zone_id: self.id.clone(),
             start_record_name: Some(fqdn.to_owned()),
@@ -93,7 +93,7 @@ impl AwsDnsZone {
         Ok(resp.resource_record_sets.into_iter().next())
     }
 
-    fn change_record_set(&self, action: &str, record_set: ResourceRecordSet) -> Result<()> {
+    fn change_record_set(&self, action: &str, record_set: ResourceRecordSet) -> Result<(), Error> {
         let fqdn = record_set.name.clone();
         let req = ChangeResourceRecordSetsRequest {
             hosted_zone_id: self.id.clone(),

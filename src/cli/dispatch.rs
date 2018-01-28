@@ -8,7 +8,7 @@ use failure::Error;
 use iprules::IpIngressRule;
 use std::collections::HashSet;
 
-pub fn dispatch<C, D>(cmd: Command, cloud: &C, dns: &D) -> Result<()>
+pub fn dispatch<C, D>(cmd: Command, cloud: &C, dns: &D) -> Result<(), Error>
 where
     C: Cloud,
     D: Dns,
@@ -135,7 +135,7 @@ mod tests {
         existing_rules: &[IpIngressRule],
         ip_cidrs: &[IpNet],
         ip_protocols: &[IpProtocol],
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         let mut expected_rules = HashSet::new();
         for ip_cidr in ip_cidrs {
             for ip_protocol in ip_protocols {
@@ -225,9 +225,9 @@ mod tests {
     fn test_start_instance<F>(
         instance_builder: F,
         instance_type: Option<InstanceType>,
-    ) -> Result<()>
+    ) -> Result<(), Error>
     where
-        F: FnOnce(&MemCloud) -> Result<MemInstance>,
+        F: FnOnce(&MemCloud) -> Result<MemInstance, Error>,
     {
         let cloud = MemCloud::new()?;
         let inst = instance_builder(&cloud)?;
@@ -293,7 +293,11 @@ mod tests {
         ).unwrap();
     }
 
-    fn test_bind_dns(inst_fqdn: &str, zone_fqdn: &str, other_zone_fqdns: &[&str]) -> Result<()> {
+    fn test_bind_dns(
+        inst_fqdn: &str,
+        zone_fqdn: &str,
+        other_zone_fqdns: &[&str],
+    ) -> Result<(), Error> {
         let cloud = MemCloud::new()?;
         let inst = cloud.create_instance("inst", Some(inst_fqdn), &InstanceType::new("t2.medium"))?;
 
@@ -302,7 +306,7 @@ mod tests {
         let other_zones = other_zone_fqdns
             .iter()
             .map(|fqdn| dns.create_dns_zone(fqdn))
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>, Error>>()?;
 
         let cmd = Command::Open {
             instance_type: None,

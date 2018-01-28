@@ -27,7 +27,7 @@ pub struct AwsFirewall {
 }
 
 impl AwsFirewall {
-    pub(super) fn list(client: &Rc<Ec2>, filter: &Filter) -> Result<Vec<AwsFirewall>> {
+    pub(super) fn list(client: &Rc<Ec2>, filter: &Filter) -> Result<Vec<AwsFirewall>, Error> {
         let req = DescribeSecurityGroupsRequest {
             filters: Some(vec![filter.clone()]),
             ..Default::default()
@@ -47,7 +47,7 @@ impl AwsFirewall {
         Ok(values)
     }
 
-    fn get_state(&self) -> Result<SecurityGroup> {
+    fn get_state(&self) -> Result<SecurityGroup, Error> {
         let req = DescribeSecurityGroupsRequest {
             group_ids: Some(vec![self.id.clone()]),
             ..Default::default()
@@ -78,7 +78,7 @@ impl Firewall for AwsFirewall {
         &self.name
     }
 
-    fn list_ingress_rules(&self) -> Result<HashSet<IpIngressRule>> {
+    fn list_ingress_rules(&self) -> Result<HashSet<IpIngressRule>, Error> {
         let mut rules = HashSet::new();
 
         let sg = self.get_state()?;
@@ -109,7 +109,7 @@ impl Firewall for AwsFirewall {
         Ok(rules)
     }
 
-    fn add_ingress_rules<'a, R>(&self, rules: R) -> Result<()>
+    fn add_ingress_rules<'a, R>(&self, rules: R) -> Result<(), Error>
     where
         R: IntoIterator<Item = &'a IpIngressRule>,
     {
@@ -133,7 +133,7 @@ impl Firewall for AwsFirewall {
         Ok(())
     }
 
-    fn remove_ingress_rules<'a, R>(&self, rules: R) -> Result<()>
+    fn remove_ingress_rules<'a, R>(&self, rules: R) -> Result<(), Error>
     where
         R: IntoIterator<Item = &'a IpIngressRule>,
     {

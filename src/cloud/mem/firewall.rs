@@ -18,7 +18,7 @@ struct MemFirewallState {
 }
 
 impl MemFirewall {
-    pub(super) fn new(id: String, name: String) -> Result<MemFirewall> {
+    pub(super) fn new(id: String, name: String) -> Result<MemFirewall, Error> {
         Ok(MemFirewall {
             id,
             name,
@@ -44,12 +44,12 @@ impl Firewall for MemFirewall {
         &self.name
     }
 
-    fn list_ingress_rules(&self) -> Result<HashSet<IpIngressRule>> {
+    fn list_ingress_rules(&self) -> Result<HashSet<IpIngressRule>, Error> {
         let state = self.state.borrow();
         Ok(state.rules.iter().cloned().collect())
     }
 
-    fn add_ingress_rules<'a, R>(&self, rules: R) -> Result<()>
+    fn add_ingress_rules<'a, R>(&self, rules: R) -> Result<(), Error>
     where
         R: IntoIterator<Item = &'a IpIngressRule>,
     {
@@ -60,7 +60,7 @@ impl Firewall for MemFirewall {
         Ok(())
     }
 
-    fn remove_ingress_rules<'a, R>(&self, rules: R) -> Result<()>
+    fn remove_ingress_rules<'a, R>(&self, rules: R) -> Result<(), Error>
     where
         R: IntoIterator<Item = &'a IpIngressRule>,
     {

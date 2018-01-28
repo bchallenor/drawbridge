@@ -20,7 +20,7 @@ struct MemDnsState {
 }
 
 impl MemDns {
-    pub fn new() -> Result<MemDns> {
+    pub fn new() -> Result<MemDns, Error> {
         Ok(MemDns {
             state: Rc::new(RefCell::new(MemDnsState {
                 ids: 0..u32::MAX,
@@ -29,7 +29,7 @@ impl MemDns {
         })
     }
 
-    pub fn create_dns_zone(&self, name: &str) -> Result<MemDnsZone> {
+    pub fn create_dns_zone(&self, name: &str) -> Result<MemDnsZone, Error> {
         let mut state = self.state.borrow_mut();
         let value = MemDnsZone::new(state.fresh_id()?, name.to_owned())?;
         state.dns_zones.insert(value.id().to_owned(), value.clone());
@@ -38,7 +38,7 @@ impl MemDns {
 }
 
 impl MemDnsState {
-    fn fresh_id(&mut self) -> Result<String> {
+    fn fresh_id(&mut self) -> Result<String, Error> {
         self.ids
             .next()
             .map(|id| id.to_string())
@@ -49,7 +49,7 @@ impl MemDnsState {
 impl Dns for MemDns {
     type DnsZone = MemDnsZone;
 
-    fn list_zones(&self) -> Result<Vec<MemDnsZone>> {
+    fn list_zones(&self) -> Result<Vec<MemDnsZone>, Error> {
         let state = self.state.borrow();
         let xs = state.dns_zones.values().cloned().collect();
         Ok(xs)

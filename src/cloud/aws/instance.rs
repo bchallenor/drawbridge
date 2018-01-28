@@ -24,7 +24,7 @@ pub struct AwsInstance {
 }
 
 impl AwsInstance {
-    pub(super) fn list(client: &Rc<Ec2>, filter: &Filter) -> Result<Vec<AwsInstance>> {
+    pub(super) fn list(client: &Rc<Ec2>, filter: &Filter) -> Result<Vec<AwsInstance>, Error> {
         let req = DescribeInstancesRequest {
             filters: Some(vec![filter.clone()]),
             ..Default::default()
@@ -52,7 +52,7 @@ impl AwsInstance {
         Ok(values)
     }
 
-    fn get_state(&self) -> Result<InstanceState> {
+    fn get_state(&self) -> Result<InstanceState, Error> {
         let req = DescribeInstancesRequest {
             instance_ids: Some(vec![self.id.clone()]),
             ..Default::default()
@@ -86,7 +86,7 @@ impl AwsInstance {
         })
     }
 
-    fn change_instance_type(&self, instance_type: &InstanceType) -> Result<()> {
+    fn change_instance_type(&self, instance_type: &InstanceType) -> Result<(), Error> {
         let req = ModifyInstanceAttributeRequest {
             instance_id: self.id.clone(),
             instance_type: Some(AttributeValue {
@@ -103,7 +103,7 @@ impl AwsInstance {
         Ok(())
     }
 
-    fn request_start(&self) -> Result<()> {
+    fn request_start(&self) -> Result<(), Error> {
         let req = StartInstancesRequest {
             instance_ids: vec![self.id.clone()],
             ..Default::default()
@@ -114,7 +114,7 @@ impl AwsInstance {
         Ok(())
     }
 
-    fn request_stop(&self) -> Result<()> {
+    fn request_stop(&self) -> Result<(), Error> {
         let req = StopInstancesRequest {
             instance_ids: vec![self.id.clone()],
             ..Default::default()
@@ -145,7 +145,7 @@ impl Instance for AwsInstance {
         self.fqdn.as_ref().map(String::as_ref)
     }
 
-    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<()> {
+    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<(), Error> {
         let state = self.get_state()?;
         println!("Instance state: {:?}", state);
         if state.instance_type == *instance_type {
@@ -158,7 +158,7 @@ impl Instance for AwsInstance {
         }
     }
 
-    fn ensure_running(&self) -> Result<InstanceRunningState> {
+    fn ensure_running(&self) -> Result<InstanceRunningState, Error> {
         loop {
             let state = self.get_state()?;
             println!("Instance state: {:?}", state);
@@ -185,7 +185,7 @@ impl Instance for AwsInstance {
         }
     }
 
-    fn ensure_stopped(&self) -> Result<()> {
+    fn ensure_stopped(&self) -> Result<(), Error> {
         loop {
             let state = self.get_state()?;
             println!("Instance state: {:?}", state);

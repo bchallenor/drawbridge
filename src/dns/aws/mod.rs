@@ -15,7 +15,7 @@ pub struct AwsDns {
 }
 
 impl AwsDns {
-    pub fn new() -> Result<AwsDns> {
+    pub fn new() -> Result<AwsDns, Error> {
         let provider = DefaultCredentialsProvider::new()
             .chain_err(|| "could not create credentials provider")?;
         let tls_client = default_tls_client().chain_err(|| "could not create TLS client")?;
@@ -30,7 +30,7 @@ impl AwsDns {
 impl Dns for AwsDns {
     type DnsZone = AwsDnsZone;
 
-    fn list_zones(&self) -> Result<Vec<AwsDnsZone>> {
+    fn list_zones(&self) -> Result<Vec<AwsDnsZone>, Error> {
         AwsDnsZone::list(&self.client)
     }
 }

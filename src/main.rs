@@ -22,7 +22,7 @@ use std::env;
 
 quick_main!(run);
 
-fn run() -> Result<()> {
+fn run() -> Result<(), Error> {
     // For e.g. Termux support on Android
     openssl_probe::init_ssl_cert_env_vars();
 

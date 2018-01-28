@@ -89,7 +89,7 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
         .subcommand(close_command)
 }
 
-pub fn parse_from_safe<I, T>(args: I) -> Result<Command>
+pub fn parse_from_safe<I, T>(args: I) -> Result<Command, Error>
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
@@ -114,7 +114,7 @@ where
                 }
                 IpProtocol::from_str(y).chain_err(|| format!("not a protocol: {}", y))
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>, _>>()?;
 
         let include_own_ip_addr = matches
             .values_of("source")
@@ -141,7 +141,7 @@ where
                         })
                 }
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>, _>>()?;
 
         if include_own_ip_addr {
             let own_ip_addr = find_own_ip_addr()?;
@@ -166,7 +166,7 @@ where
     Ok(cmd)
 }
 
-fn find_own_ip_addr() -> Result<Ipv4Addr> {
+fn find_own_ip_addr() -> Result<Ipv4Addr, Error> {
     let mut core = Core::new().chain_err(|| "failed to create core reactor")?;
     let client = Client::new(&core.handle());
     let uri = "http://checkip.amazonaws.com/".parse().expect("valid URL");
@@ -219,7 +219,7 @@ mod tests {
         test_parse(&["drawbridge", "close"], Command::Close).unwrap();
     }
 
-    fn test_parse(args: &[&str], cmd: Command) -> Result<()> {
+    fn test_parse(args: &[&str], cmd: Command) -> Result<(), Error> {
         let actual_cmd = parse_from_safe(args)?;
         assert_eq!(cmd, actual_cmd);
         Ok(())
