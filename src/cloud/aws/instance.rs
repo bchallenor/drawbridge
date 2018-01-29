@@ -3,6 +3,7 @@ use cloud::InstanceRunningState;
 use cloud::InstanceType;
 use cloud::aws::tags::TagFinder;
 use failure::Error;
+use failure::ResultExt;
 use rusoto_ec2::AttributeValue;
 use rusoto_ec2::DescribeInstancesRequest;
 use rusoto_ec2::Ec2;
@@ -31,7 +32,7 @@ impl AwsInstance {
         };
         let resp = client
             .describe_instances(&req)
-            .chain_err(|| format!("failed to describe instances: {:?}", req))?;
+            .with_context(|_e| format!("failed to describe instances: {:?}", req))?;
         let mut values: Vec<AwsInstance> = Vec::new();
         for r in resp.reservations.unwrap() {
             for i in r.instances.unwrap() {
@@ -59,7 +60,7 @@ impl AwsInstance {
         };
         let resp = self.client
             .describe_instances(&req)
-            .chain_err(|| format!("failed to describe instance: {:?}", self))?;
+            .with_context(|_e| format!("failed to describe instance: {:?}", self))?;
         let i = resp.reservations
             .unwrap()
             .into_iter()
@@ -73,7 +74,7 @@ impl AwsInstance {
             Some(ip_addr_str) => {
                 let ip_addr = ip_addr_str
                     .parse()
-                    .chain_err(|| format!("not an IP address: {}", ip_addr_str))?;
+                    .with_context(|_e| format!("not an IP address: {}", ip_addr_str))?;
                 Some(ip_addr)
             }
             None => None,
@@ -94,12 +95,14 @@ impl AwsInstance {
             }),
             ..Default::default()
         };
-        self.client.modify_instance_attribute(&req).chain_err(|| {
-            format!(
-                "failed to change instance type to {}: {}",
-                instance_type, self.id
-            )
-        })?;
+        self.client
+            .modify_instance_attribute(&req)
+            .with_context(|_e| {
+                format!(
+                    "failed to change instance type to {}: {}",
+                    instance_type, self.id
+                )
+            })?;
         Ok(())
     }
 
@@ -110,7 +113,7 @@ impl AwsInstance {
         };
         self.client
             .start_instances(&req)
-            .chain_err(|| format!("failed to start instance: {}", self.id))?;
+            .with_context(|_e| format!("failed to start instance: {}", self.id))?;
         Ok(())
     }
 
@@ -121,7 +124,7 @@ impl AwsInstance {
         };
         self.client
             .stop_instances(&req)
-            .chain_err(|| format!("failed to stop instance: {}", self.id))?;
+            .with_context(|_e| format!("failed to stop instance: {}", self.id))?;
         Ok(())
     }
 }

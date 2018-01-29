@@ -1,5 +1,6 @@
 use cloud::Firewall;
 use failure::Error;
+use failure::ResultExt;
 use ipnet::IpNet;
 use ipnet::Ipv4Net;
 use ipnet::Ipv6Net;
@@ -34,7 +35,7 @@ impl AwsFirewall {
         };
         let resp = client
             .describe_security_groups(&req)
-            .chain_err(|| format!("failed to describe security groups: {:?}", req))?;
+            .with_context(|_e| format!("failed to describe security groups: {:?}", req))?;
         let mut values: Vec<AwsFirewall> = Vec::new();
         for sg in resp.security_groups.unwrap() {
             let value = AwsFirewall {
@@ -54,7 +55,7 @@ impl AwsFirewall {
         };
         let resp = self.client
             .describe_security_groups(&req)
-            .chain_err(|| format!("failed to describe security group: {:?}", self))?;
+            .with_context(|_e| format!("failed to describe security group: {:?}", self))?;
         resp.security_groups
             .unwrap()
             .into_iter()
@@ -95,13 +96,13 @@ impl Firewall for AwsFirewall {
             for ip_range in ip_permission.ip_ranges.unwrap() {
                 let ip_cidr_str = &ip_range.cidr_ip.unwrap();
                 let ip_cidr = Ipv4Net::from_str(ip_cidr_str)
-                    .chain_err(|| format!("not an IPv4 network: {}", ip_cidr_str))?;
+                    .with_context(|_e| format!("not an IPv4 network: {}", ip_cidr_str))?;
                 rules.insert(IpIngressRule(IpNet::V4(ip_cidr), ip_protocol));
             }
             for ip_range in ip_permission.ipv_6_ranges.unwrap() {
                 let ip_cidr_str = &ip_range.cidr_ipv_6.unwrap();
                 let ip_cidr = Ipv6Net::from_str(ip_cidr_str)
-                    .chain_err(|| format!("not an IPv6 network: {}", ip_cidr_str))?;
+                    .with_context(|_e| format!("not an IPv6 network: {}", ip_cidr_str))?;
                 rules.insert(IpIngressRule(IpNet::V6(ip_cidr), ip_protocol));
             }
         }
@@ -124,7 +125,7 @@ impl Firewall for AwsFirewall {
         };
         self.client
             .authorize_security_group_ingress(&req)
-            .chain_err(|| {
+            .with_context(|_e| {
                 format!(
                     "failed to authorize ingress for security group: {}",
                     self.name
@@ -148,7 +149,9 @@ impl Firewall for AwsFirewall {
         };
         self.client
             .revoke_security_group_ingress(&req)
-            .chain_err(|| format!("failed to revoke ingress for security group: {}", self.name))?;
+            .with_context(|_e| {
+                format!("failed to revoke ingress for security group: {}", self.name)
+            })?;
         Ok(())
     }
 }

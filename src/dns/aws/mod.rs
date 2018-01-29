@@ -1,6 +1,7 @@
 use dns::Dns;
 use dns::aws::dns_zone::AwsDnsZone;
 use failure::Error;
+use failure::ResultExt;
 use rusoto_core::DefaultCredentialsProvider;
 use rusoto_core::Region;
 use rusoto_core::default_tls_client;
@@ -17,8 +18,8 @@ pub struct AwsDns {
 impl AwsDns {
     pub fn new() -> Result<AwsDns, Error> {
         let provider = DefaultCredentialsProvider::new()
-            .chain_err(|| "could not create credentials provider")?;
-        let tls_client = default_tls_client().chain_err(|| "could not create TLS client")?;
+            .with_context(|_e| "could not create credentials provider")?;
+        let tls_client = default_tls_client().with_context(|_e| "could not create TLS client")?;
         let region = Region::UsEast1;
         let route53 = Route53Client::new(tls_client, provider, region);
         Ok(AwsDns {

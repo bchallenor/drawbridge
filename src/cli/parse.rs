@@ -5,6 +5,7 @@ use clap::SubCommand;
 use cli::Command;
 use cloud::InstanceType;
 use failure::Error;
+use failure::ResultExt;
 use futures;
 use futures::Future;
 use futures::Stream;
@@ -112,7 +113,7 @@ where
                 if y != x {
                     println!("Substituted: {} -> {}", x, y);
                 }
-                IpProtocol::from_str(y).chain_err(|| format!("not a protocol: {}", y))
+                IpProtocol::from_str(y).with_context(|_e| format!("not a protocol: {}", y))
             })
             .collect::<Result<Vec<_>, _>>()?;
 
@@ -127,10 +128,10 @@ where
             .filter(|&x| x != "self")
             .map(|x| {
                 if x.contains('/') {
-                    IpNet::from_str(x).chain_err(|| format!("not an IP network: {}", x))
+                    IpNet::from_str(x).with_context(|_e| format!("not an IP network: {}", x))
                 } else {
                     IpAddr::from_str(x)
-                        .chain_err(|| format!("not an IP address: {}", x))
+                        .with_context(|_e| format!("not an IP address: {}", x))
                         .map(|addr| match addr {
                             IpAddr::V4(addr) => {
                                 IpNet::V4(Ipv4Net::new(addr, 32).expect("32 is OK"))
@@ -167,20 +168,20 @@ where
 }
 
 fn find_own_ip_addr() -> Result<Ipv4Addr, Error> {
-    let mut core = Core::new().chain_err(|| "failed to create core reactor")?;
+    let mut core = Core::new().with_context(|_e| "failed to create core reactor")?;
     let client = Client::new(&core.handle());
     let uri = "http://checkip.amazonaws.com/".parse().expect("valid URL");
     let (status, body) = core.run(
         client
             .get(uri)
             .and_then(|res| (futures::finished(res.status()), res.body().concat2())),
-    ).chain_err(|| "failed to contact checkip service")?;
-    let content = str::from_utf8(&*body).chain_err(|| "expected checkip to return UTF8")?;
+    ).with_context(|_e| "failed to contact checkip service")?;
+    let content = str::from_utf8(&*body).with_context(|_e| "expected checkip to return UTF8")?;
     if status != StatusCode::Ok {
         bail!("checkip service returned {}: {}", status, content);
     }
     let ip_addr = Ipv4Addr::from_str(content.trim_right())
-        .chain_err(|| format!("expected checkip to return IP address: {}", content))?;
+        .with_context(|_e| format!("expected checkip to return IP address: {}", content))?;
     Ok(ip_addr)
 }
 

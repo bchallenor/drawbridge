@@ -2,6 +2,7 @@ use cloud::Cloud;
 use cloud::aws::firewall::AwsFirewall;
 use cloud::aws::instance::AwsInstance;
 use failure::Error;
+use failure::ResultExt;
 use rusoto_core::DefaultCredentialsProvider;
 use rusoto_core::Region;
 use rusoto_core::default_tls_client;
@@ -23,8 +24,8 @@ pub struct AwsCloud {
 impl AwsCloud {
     pub fn new(tag_key: &str, tag_value: &str) -> Result<AwsCloud, Error> {
         let provider = DefaultCredentialsProvider::new()
-            .chain_err(|| "could not create credentials provider")?;
-        let tls_client = default_tls_client().chain_err(|| "could not create TLS client")?;
+            .with_context(|_e| "could not create credentials provider")?;
+        let tls_client = default_tls_client().with_context(|_e| "could not create TLS client")?;
         let region = AwsCloud::default_region()?;
         let ec2 = Ec2Client::new(tls_client, provider, region);
         Ok(AwsCloud {
@@ -37,11 +38,11 @@ impl AwsCloud {
     }
 
     fn default_region() -> Result<Region, Error> {
-        let region_str =
-            env::var("AWS_DEFAULT_REGION").chain_err(|| "env var AWS_DEFAULT_REGION is not set")?;
+        let region_str = env::var("AWS_DEFAULT_REGION")
+            .with_context(|_e| "env var AWS_DEFAULT_REGION is not set")?;
         let region = region_str
             .parse()
-            .chain_err(|| format!("env var AWS_DEFAULT_REGION is invalid: {}", region_str))?;
+            .with_context(|_e| format!("env var AWS_DEFAULT_REGION is invalid: {}", region_str))?;
         Ok(region)
     }
 }

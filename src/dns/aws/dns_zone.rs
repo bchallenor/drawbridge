@@ -1,5 +1,6 @@
 use dns::DnsZone;
 use failure::Error;
+use failure::ResultExt;
 use rusoto_route53::Change;
 use rusoto_route53::ChangeBatch;
 use rusoto_route53::ChangeResourceRecordSetsRequest;
@@ -25,7 +26,7 @@ impl AwsDnsZone {
         };
         let resp = client
             .list_hosted_zones(&req)
-            .chain_err(|| format!("failed to list hosted zones: {:?}", req))?;
+            .with_context(|_e| format!("failed to list hosted zones: {:?}", req))?;
         let mut values = Vec::new();
         for hz in resp.hosted_zones {
             let value = AwsDnsZone {
@@ -89,7 +90,7 @@ impl AwsDnsZone {
         };
         let resp = self.client
             .list_resource_record_sets(&req)
-            .chain_err(|| format!("failed to find existing DNS entry: {}", fqdn))?;
+            .with_context(|_e| format!("failed to find existing DNS entry: {}", fqdn))?;
         Ok(resp.resource_record_sets.into_iter().next())
     }
 
@@ -109,7 +110,7 @@ impl AwsDnsZone {
         };
         self.client
             .change_resource_record_sets(&req)
-            .chain_err(|| format!("failed to {} DNS entry: {}", action, fqdn))?;
+            .with_context(|_e| format!("failed to {} DNS entry: {}", action, fqdn))?;
         Ok(())
     }
 }
