@@ -19,18 +19,29 @@ use cloud::aws::AwsCloud;
 use dns::aws::AwsDns;
 use failure::Error;
 use std::env;
+use std::process;
 
-quick_main!(run);
+fn main() {
+    match run() {
+        Ok(()) => (),
+        Err(error) => {
+            // TODO(NLL)
+            {
+                if let Some(err) = error.downcast_ref::<clap::Error>() {
+                    err.exit();
+                }
+            }
+            eprintln!("{}", error);
+            process::exit(1)
+        }
+    }
+}
 
 fn run() -> Result<(), Error> {
     // For e.g. Termux support on Android
     openssl_probe::init_ssl_cert_env_vars();
 
-    let cmd = match cli::parse_from_safe(env::args_os()) {
-        Ok(cmd) => cmd,
-        Err(Error(ErrorKind::Clap(err), _)) => err.exit(),
-        err => err?,
-    };
+    let cmd = cli::parse_from_safe(env::args_os())?;
 
     let profile_opt = env::var("DRAWBRIDGE_PROFILE").ok();
     let profile = profile_opt.as_ref().map_or("default", String::as_ref);
