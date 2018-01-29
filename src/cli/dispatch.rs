@@ -218,7 +218,7 @@ mod tests {
         ).unwrap_err();
         assert_eq!(
             "instance must be stopped to change its type",
-            err.description()
+            err.to_string()
         );
     }
 
