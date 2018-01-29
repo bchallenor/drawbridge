@@ -1,5 +1,4 @@
 use ipnet::IpNet;
-use std::error::Error;
 use std::fmt;
 use std::result;
 use std::str;
@@ -24,20 +23,9 @@ impl fmt::Debug for IpPortRange {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Fail, Debug, Copy, Clone, PartialEq, Eq)]
+#[fail(display = "invalid IP port range")]
 pub struct ParseIpPortRangeError(());
-
-impl Error for ParseIpPortRangeError {
-    fn description(&self) -> &str {
-        "invalid IP port range"
-    }
-}
-
-impl fmt::Display for ParseIpPortRangeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description())
-    }
-}
 
 impl str::FromStr for IpPortRange {
     type Err = ParseIpPortRangeError;
@@ -75,20 +63,9 @@ impl fmt::Debug for IpProtocol {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Fail, Debug, Copy, Clone, PartialEq, Eq)]
+#[fail(display = "invalid IP protocol")]
 pub struct ParseIpProtocolError(());
-
-impl Error for ParseIpProtocolError {
-    fn description(&self) -> &str {
-        "invalid IP protocol"
-    }
-}
-
-impl fmt::Display for ParseIpProtocolError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description())
-    }
-}
 
 impl str::FromStr for IpProtocol {
     type Err = ParseIpProtocolError;
