@@ -168,15 +168,15 @@ where
 }
 
 fn find_own_ip_addr() -> Result<Ipv4Addr, Error> {
-    let mut core = Core::new().with_context(|_e| "failed to create core reactor")?;
+    let mut core = Core::new().context("failed to create core reactor")?;
     let client = Client::new(&core.handle());
     let uri = "http://checkip.amazonaws.com/".parse().expect("valid URL");
     let (status, body) = core.run(
         client
             .get(uri)
             .and_then(|res| (futures::finished(res.status()), res.body().concat2())),
-    ).with_context(|_e| "failed to contact checkip service")?;
-    let content = str::from_utf8(&*body).with_context(|_e| "expected checkip to return UTF8")?;
+    ).context("failed to contact checkip service")?;
+    let content = str::from_utf8(&*body).context("expected checkip to return UTF8")?;
     if status != StatusCode::Ok {
         bail!("checkip service returned {}: {}", status, content);
     }

@@ -17,9 +17,9 @@ pub struct AwsDns {
 
 impl AwsDns {
     pub fn new() -> Result<AwsDns, Error> {
-        let provider = DefaultCredentialsProvider::new()
-            .with_context(|_e| "could not create credentials provider")?;
-        let tls_client = default_tls_client().with_context(|_e| "could not create TLS client")?;
+        let provider =
+            DefaultCredentialsProvider::new().context("could not create credentials provider")?;
+        let tls_client = default_tls_client().context("could not create TLS client")?;
         let region = Region::UsEast1;
         let route53 = Route53Client::new(tls_client, provider, region);
         Ok(AwsDns {

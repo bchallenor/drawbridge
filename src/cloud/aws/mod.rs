@@ -24,9 +24,9 @@ pub struct AwsCloud {
 
 impl AwsCloud {
     pub fn new(tag_key: &str, tag_value: &str) -> Result<AwsCloud, Error> {
-        let provider = DefaultCredentialsProvider::new()
-            .with_context(|_e| "could not create credentials provider")?;
-        let tls_client = default_tls_client().with_context(|_e| "could not create TLS client")?;
+        let provider =
+            DefaultCredentialsProvider::new().context("could not create credentials provider")?;
+        let tls_client = default_tls_client().context("could not create TLS client")?;
         let region = AwsCloud::default_region()?;
         let ec2 = Ec2Client::new(tls_client, provider, region);
         Ok(AwsCloud {
@@ -39,8 +39,8 @@ impl AwsCloud {
     }
 
     fn default_region() -> Result<Region, Error> {
-        let region_str = env::var("AWS_DEFAULT_REGION")
-            .with_context(|_e| "env var AWS_DEFAULT_REGION is not set")?;
+        let region_str =
+            env::var("AWS_DEFAULT_REGION").context("env var AWS_DEFAULT_REGION is not set")?;
         let region = Region::from_str(&region_str)
             .with_context(|_e| format!("env var AWS_DEFAULT_REGION is invalid: {}", region_str))?;
         Ok(region)
