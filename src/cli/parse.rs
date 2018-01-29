@@ -179,8 +179,9 @@ fn find_own_ip_addr() -> Result<Ipv4Addr> {
     if status != StatusCode::Ok {
         bail!("checkip service returned {}: {}", status, content);
     }
-    Ipv4Addr::from_str(content.trim_right())
-        .chain_err(|| format!("expected checkip to return IP address: {}", content))
+    let ip_addr = Ipv4Addr::from_str(content.trim_right())
+        .chain_err(|| format!("expected checkip to return IP address: {}", content))?;
+    Ok(ip_addr)
 }
 
 #[cfg(test)]
