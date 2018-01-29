@@ -11,6 +11,7 @@ use rusoto_ec2::Ec2Client;
 use rusoto_ec2::Filter;
 use std::env;
 use std::rc::Rc;
+use std::str::FromStr;
 
 mod firewall;
 mod instance;
@@ -40,8 +41,7 @@ impl AwsCloud {
     fn default_region() -> Result<Region, Error> {
         let region_str = env::var("AWS_DEFAULT_REGION")
             .with_context(|_e| "env var AWS_DEFAULT_REGION is not set")?;
-        let region = region_str
-            .parse()
+        let region = Region::from_str(&region_str)
             .with_context(|_e| format!("env var AWS_DEFAULT_REGION is invalid: {}", region_str))?;
         Ok(region)
     }

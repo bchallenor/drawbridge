@@ -14,6 +14,7 @@ use rusoto_ec2::StopInstancesRequest;
 use std::fmt;
 use std::net::Ipv4Addr;
 use std::rc::Rc;
+use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
@@ -72,8 +73,7 @@ impl AwsInstance {
         let ebs_optimized = i.ebs_optimized.unwrap();
         let ip_addr = match i.public_ip_address {
             Some(ip_addr_str) => {
-                let ip_addr = ip_addr_str
-                    .parse()
+                let ip_addr = Ipv4Addr::from_str(&ip_addr_str)
                     .with_context(|_e| format!("not an IP address: {}", ip_addr_str))?;
                 Some(ip_addr)
             }
