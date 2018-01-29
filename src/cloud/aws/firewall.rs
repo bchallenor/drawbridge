@@ -60,7 +60,7 @@ impl AwsFirewall {
             .unwrap()
             .into_iter()
             .next()
-            .ok_or_else(|| format!("failed to find security group: {:?}", self).into())
+            .ok_or_else(|| format_err!("failed to find security group: {:?}", self))
     }
 }
 

@@ -21,7 +21,7 @@ pub trait Dns {
                 parts.ends_with(&zone_parts)
             })
             .max_by_key(|zone| zone.name().len())
-            .ok_or_else(|| format!("could not find authoritative DNS zone for: {}", name).into())
+            .ok_or_else(|| format_err!("could not find authoritative DNS zone for: {}", name))
     }
 }
 

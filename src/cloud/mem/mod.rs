@@ -71,11 +71,11 @@ impl MemCloudState {
         self.ids
             .next()
             .map(|id| id.to_string())
-            .ok_or_else(|| "exhausted".into())
+            .ok_or_else(|| format_err!("exhausted"))
     }
 
     fn fresh_ip_addr(&mut self) -> Result<Ipv4Addr, Error> {
-        self.ip_addrs.next().ok_or_else(|| "exhausted".into())
+        self.ip_addrs.next().ok_or_else(|| format_err!("exhausted"))
     }
 }
 

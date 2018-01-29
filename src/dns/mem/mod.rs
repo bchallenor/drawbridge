@@ -42,7 +42,7 @@ impl MemDnsState {
         self.ids
             .next()
             .map(|id| id.to_string())
-            .ok_or_else(|| "exhausted".into())
+            .ok_or_else(|| format_err!("exhausted"))
     }
 }
 

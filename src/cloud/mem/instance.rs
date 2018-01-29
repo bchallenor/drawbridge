@@ -81,7 +81,7 @@ impl Instance for MemInstance {
             state.instance_type = instance_type.clone();
             Ok(())
         } else {
-            Err("instance must be stopped to change its type".into())
+            Err(format_err!("instance must be stopped to change its type"))
         }
     }
 

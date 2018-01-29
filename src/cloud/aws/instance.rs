@@ -39,7 +39,7 @@ impl AwsInstance {
                 let id = i.instance_id.unwrap();
                 let tags = i.tags.unwrap();
                 let name = tags.find_tag("Name")
-                    .ok_or_else(|| format!("expected instance to have Name tag: {}", id))?;
+                    .ok_or_else(|| format_err!("expected instance to have Name tag: {}", id))?;
                 let fqdn = tags.find_tag("Fqdn");
                 let value = AwsInstance {
                     id: id,
@@ -66,7 +66,7 @@ impl AwsInstance {
             .into_iter()
             .next()
             .and_then(|r| r.instances.unwrap().into_iter().next())
-            .ok_or_else(|| Error::from(format!("failed to find instance: {:?}", self)))?;
+            .ok_or_else(|| format_err!("failed to find instance: {:?}", self))?;
         let instance_state_code = (i.state.unwrap().code.unwrap() as u8).into();
         let instance_type = InstanceType(i.instance_type.unwrap());
         let ebs_optimized = i.ebs_optimized.unwrap();
@@ -157,7 +157,7 @@ impl Instance for AwsInstance {
             self.change_instance_type(instance_type)?;
             Ok(())
         } else {
-            Err("instance must be stopped to change its type".into())
+            Err(format_err!("instance must be stopped to change its type"))
         }
     }
 
@@ -169,10 +169,7 @@ impl Instance for AwsInstance {
                 InstanceStateCode::Pending | InstanceStateCode::Stopping => (),
                 InstanceStateCode::Running => {
                     let ip_addr = state.ip_addr.ok_or_else(|| {
-                        Error::from(format!(
-                            "expected running instance to have IP address: {:?}",
-                            state
-                        ))
+                        format_err!("expected running instance to have IP address: {:?}", state)
                     })?;
                     return Ok(InstanceRunningState {
                         instance_type: state.instance_type,
