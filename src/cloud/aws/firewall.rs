@@ -90,7 +90,7 @@ impl Firewall for AwsFirewall {
             let ip_protocol = match ip_permission.ip_protocol.unwrap().as_ref() {
                 "tcp" => IpProtocol::Tcp(ip_port_range),
                 "udp" => IpProtocol::Udp(ip_port_range),
-                x => return Err(format!("unknown protocol: {}", x).into()),
+                x => bail!("unknown protocol: {}", x),
             };
             for ip_range in ip_permission.ip_ranges.unwrap() {
                 let ip_cidr_str = &ip_range.cidr_ip.unwrap();
