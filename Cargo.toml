@@ -8,7 +8,7 @@ lto = true
 
 [dependencies]
 clap = "2.29.2"
-error-chain = "0.11.0"
+failure = "0.1"
 futures = "0.1"
 hyper = "0.11"
 ipnet = "1.0.0"

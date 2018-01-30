@@ -4,7 +4,8 @@ use clap::Arg;
 use clap::SubCommand;
 use cli::Command;
 use cloud::InstanceType;
-use errors::*;
+use failure::Error;
+use failure::ResultExt;
 use futures;
 use futures::Future;
 use futures::Stream;
@@ -89,7 +90,7 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
         .subcommand(close_command)
 }
 
-pub fn parse_from_safe<I, T>(args: I) -> Result<Command>
+pub fn parse_from_safe<I, T>(args: I) -> Result<Command, Error>
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
@@ -112,9 +113,9 @@ where
                 if y != x {
                     println!("Substituted: {} -> {}", x, y);
                 }
-                IpProtocol::from_str(y).chain_err(|| format!("not a protocol: {}", y))
+                IpProtocol::from_str(y).with_context(|_e| format!("not a protocol: {}", y))
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>, _>>()?;
 
         let include_own_ip_addr = matches
             .values_of("source")
@@ -127,10 +128,10 @@ where
             .filter(|&x| x != "self")
             .map(|x| {
                 if x.contains('/') {
-                    IpNet::from_str(x).chain_err(|| format!("not an IP network: {}", x))
+                    IpNet::from_str(x).with_context(|_e| format!("not an IP network: {}", x))
                 } else {
                     IpAddr::from_str(x)
-                        .chain_err(|| format!("not an IP address: {}", x))
+                        .with_context(|_e| format!("not an IP address: {}", x))
                         .map(|addr| match addr {
                             IpAddr::V4(addr) => {
                                 IpNet::V4(Ipv4Net::new(addr, 32).expect("32 is OK"))
@@ -141,7 +142,7 @@ where
                         })
                 }
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>, _>>()?;
 
         if include_own_ip_addr {
             let own_ip_addr = find_own_ip_addr()?;
@@ -166,21 +167,21 @@ where
     Ok(cmd)
 }
 
-fn find_own_ip_addr() -> Result<Ipv4Addr> {
-    let mut core = Core::new().chain_err(|| "failed to create core reactor")?;
+fn find_own_ip_addr() -> Result<Ipv4Addr, Error> {
+    let mut core = Core::new().context("failed to create core reactor")?;
     let client = Client::new(&core.handle());
     let uri = "http://checkip.amazonaws.com/".parse().expect("valid URL");
     let (status, body) = core.run(
         client
             .get(uri)
             .and_then(|res| (futures::finished(res.status()), res.body().concat2())),
-    ).chain_err(|| "failed to contact checkip service")?;
-    let content = str::from_utf8(&*body).chain_err(|| "expected checkip to return UTF8")?;
+    ).context("failed to contact checkip service")?;
+    let content = str::from_utf8(&*body).context("expected checkip to return UTF8")?;
     if status != StatusCode::Ok {
         bail!("checkip service returned {}: {}", status, content);
     }
     let ip_addr = Ipv4Addr::from_str(content.trim_right())
-        .chain_err(|| format!("expected checkip to return IP address: {}", content))?;
+        .with_context(|_e| format!("expected checkip to return IP address: {}", content))?;
     Ok(ip_addr)
 }
 
@@ -219,7 +220,7 @@ mod tests {
         test_parse(&["drawbridge", "close"], Command::Close).unwrap();
     }
 
-    fn test_parse(args: &[&str], cmd: Command) -> Result<()> {
+    fn test_parse(args: &[&str], cmd: Command) -> Result<(), Error> {
         let actual_cmd = parse_from_safe(args)?;
         assert_eq!(cmd, actual_cmd);
         Ok(())

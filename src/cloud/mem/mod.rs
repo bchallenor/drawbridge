@@ -7,7 +7,7 @@ use cloud::Instance;
 use cloud::InstanceType;
 pub use cloud::mem::firewall::MemFirewall;
 pub use cloud::mem::instance::MemInstance;
-use errors::*;
+use failure::Error;
 use ipnet::Ipv4AddrRange;
 use ipnet::Ipv4Net;
 use std::cell::RefCell;
@@ -29,7 +29,7 @@ struct MemCloudState {
 }
 
 impl MemCloud {
-    pub fn new() -> Result<MemCloud> {
+    pub fn new() -> Result<MemCloud, Error> {
         Ok(MemCloud {
             state: Rc::new(RefCell::new(MemCloudState {
                 ids: 0..u32::MAX,
@@ -40,7 +40,7 @@ impl MemCloud {
         })
     }
 
-    pub fn create_firewall(&self, name: &str) -> Result<MemFirewall> {
+    pub fn create_firewall(&self, name: &str) -> Result<MemFirewall, Error> {
         let mut state = self.state.borrow_mut();
         let value = MemFirewall::new(state.fresh_id()?, name.to_owned())?;
         state.firewalls.insert(value.id().to_owned(), value.clone());
@@ -52,7 +52,7 @@ impl MemCloud {
         name: &str,
         fqdn: Option<&str>,
         instance_type: &InstanceType,
-    ) -> Result<MemInstance> {
+    ) -> Result<MemInstance, Error> {
         let mut state = self.state.borrow_mut();
         let value = MemInstance::new(
             state.fresh_id()?,
@@ -67,15 +67,15 @@ impl MemCloud {
 }
 
 impl MemCloudState {
-    fn fresh_id(&mut self) -> Result<String> {
+    fn fresh_id(&mut self) -> Result<String, Error> {
         self.ids
             .next()
             .map(|id| id.to_string())
-            .ok_or_else(|| "exhausted".into())
+            .ok_or_else(|| format_err!("exhausted"))
     }
 
-    fn fresh_ip_addr(&mut self) -> Result<Ipv4Addr> {
-        self.ip_addrs.next().ok_or_else(|| "exhausted".into())
+    fn fresh_ip_addr(&mut self) -> Result<Ipv4Addr, Error> {
+        self.ip_addrs.next().ok_or_else(|| format_err!("exhausted"))
     }
 }
 
@@ -83,13 +83,13 @@ impl Cloud for MemCloud {
     type Firewall = MemFirewall;
     type Instance = MemInstance;
 
-    fn list_firewalls(&self) -> Result<Vec<MemFirewall>> {
+    fn list_firewalls(&self) -> Result<Vec<MemFirewall>, Error> {
         let state = self.state.borrow();
         let xs = state.firewalls.values().cloned().collect();
         Ok(xs)
     }
 
-    fn list_instances(&self) -> Result<Vec<MemInstance>> {
+    fn list_instances(&self) -> Result<Vec<MemInstance>, Error> {
         let state = self.state.borrow();
         let xs = state.instances.values().cloned().collect();
         Ok(xs)

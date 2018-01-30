@@ -1,7 +1,7 @@
 use cloud::Instance;
 use cloud::InstanceRunningState;
 use cloud::InstanceType;
-use errors::*;
+use failure::Error;
 use std::cell::RefCell;
 use std::fmt;
 use std::net::Ipv4Addr;
@@ -28,7 +28,7 @@ impl MemInstance {
         fqdn: Option<String>,
         instance_type: InstanceType,
         ip_addr: Ipv4Addr,
-    ) -> Result<MemInstance> {
+    ) -> Result<MemInstance, Error> {
         Ok(MemInstance {
             id,
             name,
@@ -41,7 +41,7 @@ impl MemInstance {
         })
     }
 
-    pub fn try_get_running_state(&self) -> Result<Option<InstanceRunningState>> {
+    pub fn try_get_running_state(&self) -> Result<Option<InstanceRunningState>, Error> {
         let state = self.state.borrow();
         if state.is_running {
             Ok(Some(InstanceRunningState {
@@ -73,7 +73,7 @@ impl Instance for MemInstance {
         self.fqdn.as_ref().map(String::as_ref)
     }
 
-    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<()> {
+    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<(), Error> {
         let mut state = self.state.borrow_mut();
         if state.instance_type == *instance_type {
             Ok(())
@@ -81,11 +81,11 @@ impl Instance for MemInstance {
             state.instance_type = instance_type.clone();
             Ok(())
         } else {
-            Err("instance must be stopped to change its type".into())
+            Err(format_err!("instance must be stopped to change its type"))
         }
     }
 
-    fn ensure_running(&self) -> Result<InstanceRunningState> {
+    fn ensure_running(&self) -> Result<InstanceRunningState, Error> {
         let mut state = self.state.borrow_mut();
         let running_state = InstanceRunningState {
             instance_type: state.instance_type.clone(),
@@ -95,7 +95,7 @@ impl Instance for MemInstance {
         Ok(running_state)
     }
 
-    fn ensure_stopped(&self) -> Result<()> {
+    fn ensure_stopped(&self) -> Result<(), Error> {
         let mut state = self.state.borrow_mut();
         state.is_running = false;
         Ok(())

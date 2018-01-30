@@ -1,5 +1,5 @@
 use dns::DnsZone;
-use errors::*;
+use failure::Error;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
@@ -18,7 +18,7 @@ struct MemDnsZoneState {
 }
 
 impl MemDnsZone {
-    pub(super) fn new(id: String, name: String) -> Result<MemDnsZone> {
+    pub(super) fn new(id: String, name: String) -> Result<MemDnsZone, Error> {
         Ok(MemDnsZone {
             id,
             name,
@@ -28,7 +28,7 @@ impl MemDnsZone {
         })
     }
 
-    pub fn lookup(&self, fqdn: &str) -> Result<Option<Ipv4Addr>> {
+    pub fn lookup(&self, fqdn: &str) -> Result<Option<Ipv4Addr>, Error> {
         let state = self.state.borrow();
         Ok(state.records.get(fqdn).cloned())
     }
@@ -49,13 +49,13 @@ impl DnsZone for MemDnsZone {
         &self.name
     }
 
-    fn bind(&self, fqdn: &str, ip_addr: Ipv4Addr) -> Result<()> {
+    fn bind(&self, fqdn: &str, ip_addr: Ipv4Addr) -> Result<(), Error> {
         let mut state = self.state.borrow_mut();
         state.records.insert(fqdn.to_owned(), ip_addr);
         Ok(())
     }
 
-    fn unbind(&self, fqdn: &str) -> Result<()> {
+    fn unbind(&self, fqdn: &str) -> Result<(), Error> {
         let mut state = self.state.borrow_mut();
         state.records.remove(fqdn);
         Ok(())

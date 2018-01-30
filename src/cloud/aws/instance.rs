@@ -2,7 +2,8 @@ use cloud::Instance;
 use cloud::InstanceRunningState;
 use cloud::InstanceType;
 use cloud::aws::tags::TagFinder;
-use errors::*;
+use failure::Error;
+use failure::ResultExt;
 use rusoto_ec2::AttributeValue;
 use rusoto_ec2::DescribeInstancesRequest;
 use rusoto_ec2::Ec2;
@@ -13,6 +14,7 @@ use rusoto_ec2::StopInstancesRequest;
 use std::fmt;
 use std::net::Ipv4Addr;
 use std::rc::Rc;
+use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
@@ -24,21 +26,21 @@ pub struct AwsInstance {
 }
 
 impl AwsInstance {
-    pub(super) fn list(client: &Rc<Ec2>, filter: &Filter) -> Result<Vec<AwsInstance>> {
+    pub(super) fn list(client: &Rc<Ec2>, filter: &Filter) -> Result<Vec<AwsInstance>, Error> {
         let req = DescribeInstancesRequest {
             filters: Some(vec![filter.clone()]),
             ..Default::default()
         };
         let resp = client
             .describe_instances(&req)
-            .chain_err(|| format!("failed to describe instances: {:?}", req))?;
+            .with_context(|_e| format!("failed to describe instances: {:?}", req))?;
         let mut values: Vec<AwsInstance> = Vec::new();
         for r in resp.reservations.unwrap() {
             for i in r.instances.unwrap() {
                 let id = i.instance_id.unwrap();
                 let tags = i.tags.unwrap();
                 let name = tags.find_tag("Name")
-                    .ok_or_else(|| format!("expected instance to have Name tag: {}", id))?;
+                    .ok_or_else(|| format_err!("expected instance to have Name tag: {}", id))?;
                 let fqdn = tags.find_tag("Fqdn");
                 let value = AwsInstance {
                     id: id,
@@ -52,28 +54,27 @@ impl AwsInstance {
         Ok(values)
     }
 
-    fn get_state(&self) -> Result<InstanceState> {
+    fn get_state(&self) -> Result<InstanceState, Error> {
         let req = DescribeInstancesRequest {
             instance_ids: Some(vec![self.id.clone()]),
             ..Default::default()
         };
         let resp = self.client
             .describe_instances(&req)
-            .chain_err(|| format!("failed to describe instance: {:?}", self))?;
+            .with_context(|_e| format!("failed to describe instance: {:?}", self))?;
         let i = resp.reservations
             .unwrap()
             .into_iter()
             .next()
             .and_then(|r| r.instances.unwrap().into_iter().next())
-            .ok_or_else(|| Error::from(format!("failed to find instance: {:?}", self)))?;
+            .ok_or_else(|| format_err!("failed to find instance: {:?}", self))?;
         let instance_state_code = (i.state.unwrap().code.unwrap() as u8).into();
         let instance_type = InstanceType(i.instance_type.unwrap());
         let ebs_optimized = i.ebs_optimized.unwrap();
         let ip_addr = match i.public_ip_address {
             Some(ip_addr_str) => {
-                let ip_addr = ip_addr_str
-                    .parse()
-                    .chain_err(|| format!("not an IP address: {}", ip_addr_str))?;
+                let ip_addr = Ipv4Addr::from_str(&ip_addr_str)
+                    .with_context(|_e| format!("not an IP address: {}", ip_addr_str))?;
                 Some(ip_addr)
             }
             None => None,
@@ -86,7 +87,7 @@ impl AwsInstance {
         })
     }
 
-    fn change_instance_type(&self, instance_type: &InstanceType) -> Result<()> {
+    fn change_instance_type(&self, instance_type: &InstanceType) -> Result<(), Error> {
         let req = ModifyInstanceAttributeRequest {
             instance_id: self.id.clone(),
             instance_type: Some(AttributeValue {
@@ -94,34 +95,36 @@ impl AwsInstance {
             }),
             ..Default::default()
         };
-        self.client.modify_instance_attribute(&req).chain_err(|| {
-            format!(
-                "failed to change instance type to {}: {}",
-                instance_type, self.id
-            )
-        })?;
+        self.client
+            .modify_instance_attribute(&req)
+            .with_context(|_e| {
+                format!(
+                    "failed to change instance type to {}: {}",
+                    instance_type, self.id
+                )
+            })?;
         Ok(())
     }
 
-    fn request_start(&self) -> Result<()> {
+    fn request_start(&self) -> Result<(), Error> {
         let req = StartInstancesRequest {
             instance_ids: vec![self.id.clone()],
             ..Default::default()
         };
         self.client
             .start_instances(&req)
-            .chain_err(|| format!("failed to start instance: {}", self.id))?;
+            .with_context(|_e| format!("failed to start instance: {}", self.id))?;
         Ok(())
     }
 
-    fn request_stop(&self) -> Result<()> {
+    fn request_stop(&self) -> Result<(), Error> {
         let req = StopInstancesRequest {
             instance_ids: vec![self.id.clone()],
             ..Default::default()
         };
         self.client
             .stop_instances(&req)
-            .chain_err(|| format!("failed to stop instance: {}", self.id))?;
+            .with_context(|_e| format!("failed to stop instance: {}", self.id))?;
         Ok(())
     }
 }
@@ -145,7 +148,7 @@ impl Instance for AwsInstance {
         self.fqdn.as_ref().map(String::as_ref)
     }
 
-    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<()> {
+    fn try_ensure_instance_type(&self, instance_type: &InstanceType) -> Result<(), Error> {
         let state = self.get_state()?;
         println!("Instance state: {:?}", state);
         if state.instance_type == *instance_type {
@@ -154,11 +157,11 @@ impl Instance for AwsInstance {
             self.change_instance_type(instance_type)?;
             Ok(())
         } else {
-            Err("instance must be stopped to change its type".into())
+            Err(format_err!("instance must be stopped to change its type"))
         }
     }
 
-    fn ensure_running(&self) -> Result<InstanceRunningState> {
+    fn ensure_running(&self) -> Result<InstanceRunningState, Error> {
         loop {
             let state = self.get_state()?;
             println!("Instance state: {:?}", state);
@@ -166,10 +169,7 @@ impl Instance for AwsInstance {
                 InstanceStateCode::Pending | InstanceStateCode::Stopping => (),
                 InstanceStateCode::Running => {
                     let ip_addr = state.ip_addr.ok_or_else(|| {
-                        Error::from(format!(
-                            "expected running instance to have IP address: {:?}",
-                            state
-                        ))
+                        format_err!("expected running instance to have IP address: {:?}", state)
                     })?;
                     return Ok(InstanceRunningState {
                         instance_type: state.instance_type,
@@ -185,7 +185,7 @@ impl Instance for AwsInstance {
         }
     }
 
-    fn ensure_stopped(&self) -> Result<()> {
+    fn ensure_stopped(&self) -> Result<(), Error> {
         loop {
             let state = self.get_state()?;
             println!("Instance state: {:?}", state);
