@@ -31,3 +31,92 @@ pub trait DnsZone: fmt::Debug {
     fn bind(&self, fqdn: &str, ip_addr: Ipv4Addr) -> Result<(), Error>;
     fn unbind(&self, fqdn: &str) -> Result<(), Error>;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // TODO(ques_in_main)
+
+    #[test]
+    fn test_find_authoritative_zone() {
+        test_find_authoritative_zone_impl().unwrap();
+    }
+
+    fn test_find_authoritative_zone_impl() -> Result<(), Error> {
+        let dns = TestDns {
+            zones: vec![
+                TestDnsZone::new("example.com"),
+                TestDnsZone::new("sub1.example.com"),
+                TestDnsZone::new("sub2.example.com"),
+                TestDnsZone::new("unrelated.sub1.example.com"),
+                TestDnsZone::new("unrelated.sub2.example.com"),
+                TestDnsZone::new("unrelated.sub3.example.com"),
+                TestDnsZone::new("unrelated-sub1.example.com"),
+                TestDnsZone::new("unrelated-sub2.example.com"),
+                TestDnsZone::new("unrelated-sub3.example.com"),
+                TestDnsZone::new("example.net"),
+            ],
+        };
+
+        assert_eq!(
+            "example.com",
+            dns.find_authoritative_zone("x.example.com")?.name()
+        );
+        assert_eq!(
+            "sub1.example.com",
+            dns.find_authoritative_zone("x.sub1.example.com")?.name()
+        );
+        assert_eq!(
+            "sub2.example.com",
+            dns.find_authoritative_zone("x.sub2.example.com")?.name()
+        );
+        // There is no sub3.example.com, so example.com is authoritative
+        assert_eq!(
+            "example.com",
+            dns.find_authoritative_zone("x.sub3.example.com")?.name()
+        );
+
+        Ok(())
+    }
+
+    #[derive(Debug)]
+    struct TestDns {
+        zones: Vec<TestDnsZone>,
+    }
+
+    impl Dns for TestDns {
+        type DnsZone = TestDnsZone;
+        fn list_zones(&self) -> Result<Vec<Self::DnsZone>, Error> {
+            Ok(self.zones.clone())
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    struct TestDnsZone {
+        name: String,
+    }
+
+    impl TestDnsZone {
+        fn new(name: &str) -> TestDnsZone {
+            TestDnsZone {
+                name: name.to_owned(),
+            }
+        }
+    }
+
+    impl DnsZone for TestDnsZone {
+        fn id(&self) -> &str {
+            &self.name
+        }
+        fn name(&self) -> &str {
+            &self.name
+        }
+        fn bind(&self, _fqdn: &str, _ip_addr: Ipv4Addr) -> Result<(), Error> {
+            unimplemented!();
+        }
+        fn unbind(&self, _fqdn: &str) -> Result<(), Error> {
+            unimplemented!();
+        }
+    }
+}
