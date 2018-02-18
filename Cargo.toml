@@ -3,9 +3,6 @@ name = "drawbridge"
 version = "0.1.0"
 authors = ["Ben Challenor <ben@challenor.org>"]
 
-[profile.release]
-lto = true
-
 [dependencies]
 clap = "2.29.2"
 failure = "0.1"
