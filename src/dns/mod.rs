@@ -1,4 +1,5 @@
 pub mod aws;
+#[cfg(test)]
 pub mod mem;
 
 use failure::Error;
