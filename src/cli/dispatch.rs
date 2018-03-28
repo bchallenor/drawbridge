@@ -40,17 +40,7 @@ where
 
     for fw in fws {
         println!("Processing firewall: {:?}", fw);
-
-        let existing_rules = fw.list_ingress_rules()?;
-        println!("Existing rules: {:?}", existing_rules);
-
-        let missing_rules = &desired_rules - &existing_rules;
-        println!("Adding rules: {:?}", missing_rules);
-        fw.add_ingress_rules(&missing_rules)?;
-
-        let extra_rules = &existing_rules - &desired_rules;
-        println!("Removing rules: {:?}", extra_rules);
-        fw.remove_ingress_rules(&extra_rules)?;
+        sync_firewall_rules(fw, &desired_rules)?;
     }
 
     for instance in instances {
@@ -90,6 +80,26 @@ where
             }
         }
     }
+
+    Ok(())
+}
+
+fn sync_firewall_rules<F>(fw: F, desired_rules: &HashSet<IpIngressRule>) -> Result<(), Error>
+where
+    F: Firewall,
+{
+    println!("Desired rules: {:?}", desired_rules);
+
+    let existing_rules = fw.list_ingress_rules()?;
+    println!("Existing rules: {:?}", existing_rules);
+
+    let missing_rules = desired_rules - &existing_rules;
+    println!("Adding rules: {:?}", missing_rules);
+    fw.add_ingress_rules(&missing_rules)?;
+
+    let extra_rules = &existing_rules - desired_rules;
+    println!("Removing rules: {:?}", extra_rules);
+    fw.remove_ingress_rules(&extra_rules)?;
 
     Ok(())
 }
