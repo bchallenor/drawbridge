@@ -60,7 +60,12 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .multiple(true)
                 .required(true),
-        )
+        );
+
+    let close_command = SubCommand::with_name("close");
+
+    let start_command = SubCommand::with_name("start")
+        .setting(AppSettings::DeriveDisplayOrder)
         .arg(
             Arg::with_name("instance-type")
                 .help(
@@ -77,7 +82,7 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true),
         );
 
-    let close_command = SubCommand::with_name("close");
+    let stop_command = SubCommand::with_name("stop");
 
     App::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
@@ -88,6 +93,8 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
         .setting(AppSettings::DeriveDisplayOrder)
         .subcommand(open_command)
         .subcommand(close_command)
+        .subcommand(start_command)
+        .subcommand(stop_command)
 }
 
 pub fn parse_from_safe<I, T>(args: I) -> Result<Command, Error>
@@ -151,15 +158,18 @@ where
             ip_cidrs.push(own_ip_cidr);
         }
 
-        let instance_type = matches.value_of("instance-type").map(InstanceType::new);
-
         Command::Open {
             ip_protocols,
             ip_cidrs,
-            instance_type,
         }
     } else if let Some(_matches) = matches.subcommand_matches("close") {
         Command::Close
+    } else if let Some(matches) = matches.subcommand_matches("start") {
+        let instance_type = matches.value_of("instance-type").map(InstanceType::new);
+
+        Command::Start { instance_type }
+    } else if let Some(_matches) = matches.subcommand_matches("stop") {
+        Command::Stop
     } else {
         unreachable!()
     };
@@ -201,8 +211,6 @@ mod tests {
                 "1.1.1.1",
                 "--source",
                 "::ffff:1.1.1.1",
-                "--instance-type",
-                "m3.medium",
             ],
             Command::Open {
                 ip_cidrs: vec![
@@ -210,7 +218,6 @@ mod tests {
                     "::ffff:1.1.1.1/128".parse().unwrap(),
                 ],
                 ip_protocols: vec!["22/tcp".parse().unwrap()],
-                instance_type: Some(InstanceType::new("m3.medium")),
             },
         ).unwrap();
     }
@@ -218,6 +225,21 @@ mod tests {
     #[test]
     fn test_parse_close() {
         test_parse(&["drawbridge", "close"], Command::Close).unwrap();
+    }
+
+    #[test]
+    fn test_parse_start() {
+        test_parse(
+            &["drawbridge", "start", "--instance-type", "m3.medium"],
+            Command::Start {
+                instance_type: Some(InstanceType::new("m3.medium")),
+            },
+        ).unwrap();
+    }
+
+    #[test]
+    fn test_parse_stop() {
+        test_parse(&["drawbridge", "stop"], Command::Stop).unwrap();
     }
 
     fn test_parse(args: &[&str], cmd: Command) -> Result<(), Error> {
