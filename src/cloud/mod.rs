@@ -13,8 +13,14 @@ pub trait Cloud {
     type Firewall: Firewall;
     type Instance: Instance;
 
-    fn list_firewalls(&self) -> Result<Vec<Self::Firewall>, Error>;
-    fn list_instances(&self) -> Result<Vec<Self::Instance>, Error>;
+    fn list_firewalls<'a, N, S>(&self, names: N) -> Result<Vec<Self::Firewall>, Error>
+    where
+        N: IntoIterator<Item = &'a S>,
+        S: AsRef<str> + 'a;
+    fn list_instances<'a, N, S>(&self, names: N) -> Result<Vec<Self::Instance>, Error>
+    where
+        N: IntoIterator<Item = &'a S>,
+        S: AsRef<str> + 'a;
 }
 
 pub trait Firewall: fmt::Debug {

@@ -43,14 +43,7 @@ fn run() -> Result<(), Error> {
 
     let cmd = cli::parse_from_safe(env::args_os())?;
 
-    let profile_opt = env::var("DRAWBRIDGE_PROFILE").ok();
-    let profile = profile_opt.as_ref().map_or("default", String::as_ref);
-
-    let tag_key = "Drawbridge";
-    let tag_value = profile;
-    println!("Filtering resources with tag: {}={}", tag_key, tag_value);
-
-    let cloud = AwsCloud::new(tag_key, tag_value)?;
+    let cloud = AwsCloud::new()?;
     let dns = AwsDns::new()?;
 
     cli::dispatch(cmd, &cloud, &dns)

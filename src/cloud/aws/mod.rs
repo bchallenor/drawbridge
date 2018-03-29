@@ -17,19 +17,14 @@ mod tags;
 
 pub struct AwsCloud {
     client: Rc<Ec2>,
-    filter: Filter,
 }
 
 impl AwsCloud {
-    pub fn new(tag_key: &str, tag_value: &str) -> Result<AwsCloud, Error> {
+    pub fn new() -> Result<AwsCloud, Error> {
         let region = AwsCloud::default_region()?;
         let ec2 = Ec2Client::simple(region);
         Ok(AwsCloud {
             client: Rc::new(ec2),
-            filter: Filter {
-                name: Some(format!("tag:{}", tag_key)),
-                values: Some(vec![tag_value.to_owned()]),
-            },
         })
     }
 
@@ -46,11 +41,30 @@ impl Cloud for AwsCloud {
     type Firewall = AwsFirewall;
     type Instance = AwsInstance;
 
-    fn list_firewalls(&self) -> Result<Vec<AwsFirewall>, Error> {
-        AwsFirewall::list(&self.client, &self.filter)
+    fn list_firewalls<'a, N, S>(&self, names: N) -> Result<Vec<AwsFirewall>, Error>
+    where
+        N: IntoIterator<Item = &'a S>,
+        S: AsRef<str> + 'a,
+    {
+        AwsFirewall::list(&self.client, build_filter(names))
     }
 
-    fn list_instances(&self) -> Result<Vec<AwsInstance>, Error> {
-        AwsInstance::list(&self.client, &self.filter)
+    fn list_instances<'a, N, S>(&self, names: N) -> Result<Vec<AwsInstance>, Error>
+    where
+        N: IntoIterator<Item = &'a S>,
+        S: AsRef<str> + 'a,
+    {
+        AwsInstance::list(&self.client, build_filter(names))
+    }
+}
+
+fn build_filter<'a, N, S>(names: N) -> Filter
+where
+    N: IntoIterator<Item = &'a S>,
+    S: AsRef<str> + 'a,
+{
+    Filter {
+        name: Some("tag:Name".to_owned()),
+        values: Some(names.into_iter().map(|x| x.as_ref().to_owned()).collect()),
     }
 }

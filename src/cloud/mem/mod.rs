@@ -12,6 +12,7 @@ use ipnet::Ipv4AddrRange;
 use ipnet::Ipv4Net;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::net::Ipv4Addr;
 use std::ops::Range;
 use std::rc::Rc;
@@ -83,15 +84,35 @@ impl Cloud for MemCloud {
     type Firewall = MemFirewall;
     type Instance = MemInstance;
 
-    fn list_firewalls(&self) -> Result<Vec<MemFirewall>, Error> {
+    fn list_firewalls<'a, N, S>(&self, names: N) -> Result<Vec<MemFirewall>, Error>
+    where
+        N: IntoIterator<Item = &'a S>,
+        S: AsRef<str> + 'a,
+    {
         let state = self.state.borrow();
-        let xs = state.firewalls.values().cloned().collect();
+        let names: HashSet<&str> = names.into_iter().map(AsRef::as_ref).collect();
+        let xs = state
+            .firewalls
+            .values()
+            .filter(|x| names.contains(x.name()))
+            .cloned()
+            .collect();
         Ok(xs)
     }
 
-    fn list_instances(&self) -> Result<Vec<MemInstance>, Error> {
+    fn list_instances<'a, N, S>(&self, names: N) -> Result<Vec<MemInstance>, Error>
+    where
+        N: IntoIterator<Item = &'a S>,
+        S: AsRef<str> + 'a,
+    {
         let state = self.state.borrow();
-        let xs = state.instances.values().cloned().collect();
+        let names: HashSet<&str> = names.into_iter().map(AsRef::as_ref).collect();
+        let xs = state
+            .instances
+            .values()
+            .filter(|x| names.contains(x.name()))
+            .cloned()
+            .collect();
         Ok(xs)
     }
 }

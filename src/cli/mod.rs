@@ -13,10 +13,16 @@ pub enum Command {
     Open {
         ip_cidrs: Vec<IpNet>,
         ip_protocols: Vec<IpProtocol>,
+        names: Vec<String>,
     },
-    Close,
+    Close {
+        names: Vec<String>,
+    },
     Start {
         instance_type: Option<InstanceType>,
+        names: Vec<String>,
     },
-    Stop,
+    Stop {
+        names: Vec<String>,
+    },
 }
