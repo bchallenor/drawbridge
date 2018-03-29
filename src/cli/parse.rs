@@ -42,6 +42,7 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
                 .long("protocol")
                 .takes_value(true)
                 .multiple(true)
+                .require_delimiter(true)
                 .required(true),
         )
         .arg(
@@ -59,6 +60,7 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
                 .long("source")
                 .takes_value(true)
                 .multiple(true)
+                .require_delimiter(true)
                 .required(true),
         );
 
