@@ -35,7 +35,7 @@ where
             println!("Found firewalls: {:?}", fws);
 
             for fw in fws {
-                println!("Processing firewall: {:?}", fw);
+                println!("Opening firewall: {:?}", fw);
                 sync_firewall_rules(fw, &desired_rules)?;
             }
         }
@@ -46,7 +46,7 @@ where
             println!("Found firewalls: {:?}", fws);
 
             for fw in fws {
-                println!("Processing firewall: {:?}", fw);
+                println!("Closing firewall: {:?}", fw);
                 sync_firewall_rules(fw, &desired_rules)?;
             }
         }
@@ -55,7 +55,7 @@ where
             println!("Found instances: {:?}", instances);
 
             for instance in instances {
-                println!("Processing instance: {:?}", instance);
+                println!("Starting instance: {:?}", instance);
 
                 if let &Some(ref instance_type) = instance_type {
                     instance.try_ensure_instance_type(instance_type)?;
@@ -76,7 +76,7 @@ where
             println!("Found instances: {:?}", instances);
 
             for instance in instances {
-                println!("Processing instance: {:?}", instance);
+                println!("Stopping instance: {:?}", instance);
 
                 instance.ensure_stopped()?;
                 println!("Instance stopped");
