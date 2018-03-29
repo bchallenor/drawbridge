@@ -7,6 +7,7 @@ use dns::DnsZone;
 use failure::Error;
 use iprules::IpIngressRule;
 use std::collections::HashSet;
+use std::net::Ipv4Addr;
 
 pub fn dispatch<C, D>(cmd: Command, cloud: &C, dns: &D) -> Result<(), Error>
 where
@@ -68,16 +69,7 @@ where
         };
 
         if let Some(fqdn) = instance.fqdn() {
-            let dns_zone = dns.find_authoritative_zone(fqdn)?;
-            println!("Found authoritative DNS zone for {}: {:?}", fqdn, dns_zone);
-
-            if let Some(ip_addr) = ip_addr_or_none {
-                dns_zone.bind(fqdn, ip_addr)?;
-                println!("Bound hostname: {}", fqdn);
-            } else {
-                dns_zone.unbind(fqdn)?;
-                println!("Unbound hostname: {}", fqdn);
-            }
+            sync_dns(dns, fqdn, ip_addr_or_none)?;
         }
     }
 
@@ -100,6 +92,24 @@ where
     let extra_rules = &existing_rules - desired_rules;
     println!("Removing rules: {:?}", extra_rules);
     fw.remove_ingress_rules(&extra_rules)?;
+
+    Ok(())
+}
+
+fn sync_dns<D>(dns: &D, fqdn: &str, ip_addr_or_none: Option<Ipv4Addr>) -> Result<(), Error>
+where
+    D: Dns,
+{
+    let dns_zone = dns.find_authoritative_zone(fqdn)?;
+    println!("Found authoritative DNS zone for {}: {:?}", fqdn, dns_zone);
+
+    if let Some(ip_addr) = ip_addr_or_none {
+        dns_zone.bind(fqdn, ip_addr)?;
+        println!("Bound hostname: {}", fqdn);
+    } else {
+        dns_zone.unbind(fqdn)?;
+        println!("Unbound hostname: {}", fqdn);
+    }
 
     Ok(())
 }
