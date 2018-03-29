@@ -1,5 +1,5 @@
-mod parse;
 mod dispatch;
+mod parse;
 
 pub use cli::dispatch::dispatch;
 pub use cli::parse::parse_from_safe;
