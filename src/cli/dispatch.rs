@@ -22,35 +22,30 @@ where
     let instances = cloud.list_instances()?;
     println!("Found instances: {:?}", instances);
 
-    let desired_rules = match cmd {
+    match cmd {
         Command::Open {
             ref ip_cidrs,
             ref ip_protocols,
-            ..
+            ref instance_type,
         } => {
-            let mut ip_rules = HashSet::new();
-            for ip_cidr in ip_cidrs {
-                for ip_protocol in ip_protocols {
-                    ip_rules.insert(IpIngressRule(*ip_cidr, *ip_protocol));
+            let desired_rules = {
+                let mut ip_rules = HashSet::new();
+                for ip_cidr in ip_cidrs {
+                    for ip_protocol in ip_protocols {
+                        ip_rules.insert(IpIngressRule(*ip_cidr, *ip_protocol));
+                    }
                 }
+                ip_rules
+            };
+
+            for fw in fws {
+                println!("Processing firewall: {:?}", fw);
+                sync_firewall_rules(fw, &desired_rules)?;
             }
-            ip_rules
-        }
-        Command::Close => HashSet::new(),
-    };
 
-    for fw in fws {
-        println!("Processing firewall: {:?}", fw);
-        sync_firewall_rules(fw, &desired_rules)?;
-    }
+            for instance in instances {
+                println!("Processing instance: {:?}", instance);
 
-    for instance in instances {
-        println!("Processing instance: {:?}", instance);
-
-        let ip_addr_or_none = match cmd {
-            Command::Open {
-                ref instance_type, ..
-            } => {
                 if let &Some(ref instance_type) = instance_type {
                     instance.try_ensure_instance_type(instance_type)?;
                 }
@@ -59,19 +54,32 @@ where
                     "Instance running with type: {} and IP address: {}",
                     state.instance_type, state.ip_addr
                 );
-                Some(state.ip_addr)
+
+                if let Some(fqdn) = instance.fqdn() {
+                    sync_dns(dns, fqdn, Some(state.ip_addr))?;
+                }
             }
-            Command::Close => {
+        }
+        Command::Close => {
+            let desired_rules = HashSet::new();
+
+            for fw in fws {
+                println!("Processing firewall: {:?}", fw);
+                sync_firewall_rules(fw, &desired_rules)?;
+            }
+
+            for instance in instances {
+                println!("Processing instance: {:?}", instance);
+
                 instance.ensure_stopped()?;
                 println!("Instance stopped");
-                None
-            }
-        };
 
-        if let Some(fqdn) = instance.fqdn() {
-            sync_dns(dns, fqdn, ip_addr_or_none)?;
+                if let Some(fqdn) = instance.fqdn() {
+                    sync_dns(dns, fqdn, None)?;
+                }
+            }
         }
-    }
+    };
 
     Ok(())
 }
