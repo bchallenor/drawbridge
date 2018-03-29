@@ -78,12 +78,13 @@ where
             for instance in instances {
                 println!("Stopping instance: {:?}", instance);
 
-                instance.ensure_stopped()?;
-                println!("Instance stopped");
-
+                // Unbind DNS before stopping
                 if let Some(fqdn) = instance.fqdn() {
                     sync_dns(dns, fqdn, None)?;
                 }
+
+                instance.ensure_stopped()?;
+                println!("Instance stopped");
             }
         }
     };
