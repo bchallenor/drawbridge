@@ -16,17 +16,10 @@ where
 {
     println!("Running command: {:?}", cmd);
 
-    let fws = cloud.list_firewalls()?;
-    println!("Found firewalls: {:?}", fws);
-
-    let instances = cloud.list_instances()?;
-    println!("Found instances: {:?}", instances);
-
     match cmd {
         Command::Open {
             ref ip_cidrs,
             ref ip_protocols,
-            ref instance_type,
         } => {
             let desired_rules = {
                 let mut ip_rules = HashSet::new();
@@ -38,13 +31,31 @@ where
                 ip_rules
             };
 
+            let fws = cloud.list_firewalls()?;
+            println!("Found firewalls: {:?}", fws);
+
             for fw in fws {
-                println!("Processing firewall: {:?}", fw);
+                println!("Opening firewall: {:?}", fw);
                 sync_firewall_rules(fw, &desired_rules)?;
             }
+        }
+        Command::Close => {
+            let desired_rules = HashSet::new();
+
+            let fws = cloud.list_firewalls()?;
+            println!("Found firewalls: {:?}", fws);
+
+            for fw in fws {
+                println!("Closing firewall: {:?}", fw);
+                sync_firewall_rules(fw, &desired_rules)?;
+            }
+        }
+        Command::Start { ref instance_type } => {
+            let instances = cloud.list_instances()?;
+            println!("Found instances: {:?}", instances);
 
             for instance in instances {
-                println!("Processing instance: {:?}", instance);
+                println!("Starting instance: {:?}", instance);
 
                 if let &Some(ref instance_type) = instance_type {
                     instance.try_ensure_instance_type(instance_type)?;
@@ -60,16 +71,12 @@ where
                 }
             }
         }
-        Command::Close => {
-            let desired_rules = HashSet::new();
-
-            for fw in fws {
-                println!("Processing firewall: {:?}", fw);
-                sync_firewall_rules(fw, &desired_rules)?;
-            }
+        Command::Stop => {
+            let instances = cloud.list_instances()?;
+            println!("Found instances: {:?}", instances);
 
             for instance in instances {
-                println!("Processing instance: {:?}", instance);
+                println!("Stopping instance: {:?}", instance);
 
                 instance.ensure_stopped()?;
                 println!("Instance stopped");
@@ -178,17 +185,16 @@ mod tests {
         let dns = MemDns::new()?;
 
         let cmd = Command::Open {
-            instance_type: None,
             ip_cidrs: ip_cidrs.to_vec(),
             ip_protocols: ip_protocols.to_vec(),
         };
 
-        // test that start command opens the firewall
+        // test that open command opens the firewall
         dispatch(cmd, &cloud, &dns)?;
 
         assert_eq!(expected_rules, fw.list_ingress_rules()?);
 
-        // test that stop command closes the firewall, and that it is idempotent
+        // test that close command closes the firewall, and that it is idempotent
         for _ in 0..2 {
             dispatch(Command::Close, &cloud, &dns)?;
 
@@ -262,10 +268,8 @@ mod tests {
 
         let dns = MemDns::new()?;
 
-        let cmd = Command::Open {
+        let cmd = Command::Start {
             instance_type: instance_type.clone(),
-            ip_cidrs: vec![],
-            ip_protocols: vec![],
         };
 
         // test that start command starts the instance
@@ -279,7 +283,7 @@ mod tests {
 
         // test that stop command stops the instance, and that it is idempotent
         for _ in 0..2 {
-            dispatch(Command::Close, &cloud, &dns)?;
+            dispatch(Command::Stop, &cloud, &dns)?;
 
             let running_state = inst.try_get_running_state()?;
             assert_eq!(true, running_state.is_none()); // i.e. stopped
@@ -336,10 +340,8 @@ mod tests {
             .map(|fqdn| dns.create_dns_zone(fqdn))
             .collect::<Result<Vec<_>, Error>>()?;
 
-        let cmd = Command::Open {
+        let cmd = Command::Start {
             instance_type: None,
-            ip_cidrs: vec![],
-            ip_protocols: vec![],
         };
 
         // test that start command binds the DNS
@@ -357,7 +359,7 @@ mod tests {
 
         // test that stop command unbinds the DNS, and that it is idempotent
         for _ in 0..2 {
-            dispatch(Command::Close, &cloud, &dns)?;
+            dispatch(Command::Stop, &cloud, &dns)?;
 
             assert_eq!(None, zone.lookup(inst_fqdn)?);
             for other_zone in &other_zones {
