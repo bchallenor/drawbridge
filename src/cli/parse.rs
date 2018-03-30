@@ -26,6 +26,13 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
     let open_command = SubCommand::with_name("open")
         .setting(AppSettings::DeriveDisplayOrder)
         .arg(
+            Arg::with_name("name")
+                .help("Names of firewalls to open.\n")
+                .required(true)
+                .multiple(true)
+                .index(1),
+        )
+        .arg(
             Arg::with_name("protocol")
                 .help(
                     "Protocol to allow through the firewall. Examples:\n\
@@ -64,10 +71,25 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
                 .required(true),
         );
 
-    let close_command = SubCommand::with_name("close");
+    let close_command = SubCommand::with_name("close")
+        .setting(AppSettings::DeriveDisplayOrder)
+        .arg(
+            Arg::with_name("name")
+                .help("Names of firewalls to close.\n")
+                .required(true)
+                .multiple(true)
+                .index(1),
+        );
 
     let start_command = SubCommand::with_name("start")
         .setting(AppSettings::DeriveDisplayOrder)
+        .arg(
+            Arg::with_name("name")
+                .help("Names of instances to start.\n")
+                .required(true)
+                .multiple(true)
+                .index(1),
+        )
         .arg(
             Arg::with_name("instance-type")
                 .help(
@@ -84,7 +106,15 @@ fn define_app<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true),
         );
 
-    let stop_command = SubCommand::with_name("stop");
+    let stop_command = SubCommand::with_name("stop")
+        .setting(AppSettings::DeriveDisplayOrder)
+        .arg(
+            Arg::with_name("name")
+                .help("Names of instances to stop.\n")
+                .required(true)
+                .multiple(true)
+                .index(1),
+        );
 
     App::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
@@ -160,18 +190,45 @@ where
             ip_cidrs.push(own_ip_cidr);
         }
 
+        let names: Vec<String> = matches
+            .values_of("name")
+            .expect("required")
+            .map(str::to_owned)
+            .collect();
+
         Command::Open {
             ip_protocols,
             ip_cidrs,
+            names,
         }
-    } else if let Some(_matches) = matches.subcommand_matches("close") {
-        Command::Close
+    } else if let Some(matches) = matches.subcommand_matches("close") {
+        let names: Vec<String> = matches
+            .values_of("name")
+            .expect("required")
+            .map(str::to_owned)
+            .collect();
+
+        Command::Close { names }
     } else if let Some(matches) = matches.subcommand_matches("start") {
         let instance_type = matches.value_of("instance-type").map(InstanceType::new);
+        let names: Vec<String> = matches
+            .values_of("name")
+            .expect("required")
+            .map(str::to_owned)
+            .collect();
 
-        Command::Start { instance_type }
-    } else if let Some(_matches) = matches.subcommand_matches("stop") {
-        Command::Stop
+        Command::Start {
+            instance_type,
+            names,
+        }
+    } else if let Some(matches) = matches.subcommand_matches("stop") {
+        let names: Vec<String> = matches
+            .values_of("name")
+            .expect("required")
+            .map(str::to_owned)
+            .collect();
+
+        Command::Stop { names }
     } else {
         unreachable!()
     };
@@ -213,6 +270,8 @@ mod tests {
                 "1.1.1.1",
                 "--source",
                 "::ffff:1.1.1.1",
+                "x",
+                "y",
             ],
             Command::Open {
                 ip_cidrs: vec![
@@ -220,28 +279,47 @@ mod tests {
                     "::ffff:1.1.1.1/128".parse().unwrap(),
                 ],
                 ip_protocols: vec!["22/tcp".parse().unwrap()],
+                names: vec!["x".to_owned(), "y".to_owned()],
             },
         ).unwrap();
     }
 
     #[test]
     fn test_parse_close() {
-        test_parse(&["drawbridge", "close"], Command::Close).unwrap();
+        test_parse(
+            &["drawbridge", "close", "x", "y"],
+            Command::Close {
+                names: vec!["x".to_owned(), "y".to_owned()],
+            },
+        ).unwrap();
     }
 
     #[test]
     fn test_parse_start() {
         test_parse(
-            &["drawbridge", "start", "--instance-type", "m3.medium"],
+            &[
+                "drawbridge",
+                "start",
+                "--instance-type",
+                "m3.medium",
+                "x",
+                "y",
+            ],
             Command::Start {
                 instance_type: Some(InstanceType::new("m3.medium")),
+                names: vec!["x".to_owned(), "y".to_owned()],
             },
         ).unwrap();
     }
 
     #[test]
     fn test_parse_stop() {
-        test_parse(&["drawbridge", "stop"], Command::Stop).unwrap();
+        test_parse(
+            &["drawbridge", "stop", "x", "y"],
+            Command::Stop {
+                names: vec!["x".to_owned(), "y".to_owned()],
+            },
+        ).unwrap();
     }
 
     fn test_parse(args: &[&str], cmd: Command) -> Result<(), Error> {

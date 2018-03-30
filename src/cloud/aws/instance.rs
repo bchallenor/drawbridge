@@ -26,9 +26,9 @@ pub struct AwsInstance {
 }
 
 impl AwsInstance {
-    pub(super) fn list(client: &Rc<Ec2>, filter: &Filter) -> Result<Vec<AwsInstance>, Error> {
+    pub(super) fn list(client: &Rc<Ec2>, filter: Filter) -> Result<Vec<AwsInstance>, Error> {
         let req = DescribeInstancesRequest {
-            filters: Some(vec![filter.clone()]),
+            filters: Some(vec![filter]),
             ..Default::default()
         };
         let resp = client

@@ -28,9 +28,9 @@ pub struct AwsFirewall {
 }
 
 impl AwsFirewall {
-    pub(super) fn list(client: &Rc<Ec2>, filter: &Filter) -> Result<Vec<AwsFirewall>, Error> {
+    pub(super) fn list(client: &Rc<Ec2>, filter: Filter) -> Result<Vec<AwsFirewall>, Error> {
         let req = DescribeSecurityGroupsRequest {
-            filters: Some(vec![filter.clone()]),
+            filters: Some(vec![filter]),
             ..Default::default()
         };
         let resp = client
