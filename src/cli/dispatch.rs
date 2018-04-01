@@ -3,11 +3,11 @@ use cloud::Cloud;
 use cloud::Firewall;
 use cloud::Instance;
 use dns::Dns;
+use dns::DnsTarget;
 use dns::DnsZone;
 use failure::Error;
 use iprules::IpIngressRule;
 use std::collections::HashSet;
-use std::net::Ipv4Addr;
 
 pub fn dispatch<C, D>(cmd: Command, cloud: &C, dns: &D) -> Result<(), Error>
 where
@@ -66,12 +66,12 @@ where
                 }
                 let state = instance.ensure_running()?;
                 println!(
-                    "Instance running with type: {} and IP address: {}",
-                    state.instance_type, state.ip_addr
+                    "Instance running with type: {} and address: {:?}",
+                    state.instance_type, state.addr
                 );
 
                 if let Some(fqdn) = instance.fqdn() {
-                    sync_dns(dns, fqdn, Some(state.ip_addr))?;
+                    sync_dns(dns, fqdn, Some(state.addr))?;
                 }
             }
         }
@@ -116,15 +116,15 @@ where
     Ok(())
 }
 
-fn sync_dns<D>(dns: &D, fqdn: &str, ip_addr_or_none: Option<Ipv4Addr>) -> Result<(), Error>
+fn sync_dns<D>(dns: &D, fqdn: &str, target_or_none: Option<DnsTarget>) -> Result<(), Error>
 where
     D: Dns,
 {
     let dns_zone = dns.find_authoritative_zone(fqdn)?;
     println!("Found authoritative DNS zone for {}: {:?}", fqdn, dns_zone);
 
-    if let Some(ip_addr) = ip_addr_or_none {
-        dns_zone.bind(fqdn, ip_addr)?;
+    if let Some(target) = target_or_none {
+        dns_zone.bind(fqdn, target)?;
         println!("Bound hostname: {}", fqdn);
     } else {
         dns_zone.unbind(fqdn)?;
@@ -369,10 +369,7 @@ mod tests {
 
         let running_state = inst.try_get_running_state()?;
         assert_eq!(true, running_state.is_some()); // i.e. running
-        assert_eq!(
-            Some(running_state.unwrap().ip_addr),
-            zone.lookup(inst_fqdn)?
-        );
+        assert_eq!(Some(running_state.unwrap().addr), zone.lookup(inst_fqdn)?);
         for other_zone in &other_zones {
             assert_eq!(None, other_zone.lookup(inst_fqdn)?);
         }
