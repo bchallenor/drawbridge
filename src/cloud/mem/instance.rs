@@ -1,6 +1,7 @@
 use cloud::Instance;
 use cloud::InstanceRunningState;
 use cloud::InstanceType;
+use dns::DnsTarget;
 use failure::Error;
 use std::cell::RefCell;
 use std::fmt;
@@ -46,7 +47,7 @@ impl MemInstance {
         if state.is_running {
             Ok(Some(InstanceRunningState {
                 instance_type: state.instance_type.clone(),
-                ip_addr: state.ip_addr,
+                addr: DnsTarget::A(state.ip_addr),
             }))
         } else {
             Ok(None)
@@ -89,7 +90,7 @@ impl Instance for MemInstance {
         let mut state = self.state.borrow_mut();
         let running_state = InstanceRunningState {
             instance_type: state.instance_type.clone(),
-            ip_addr: state.ip_addr,
+            addr: DnsTarget::A(state.ip_addr),
         };
         state.is_running = true;
         Ok(running_state)

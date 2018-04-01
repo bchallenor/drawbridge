@@ -29,8 +29,15 @@ pub trait Dns {
 pub trait DnsZone: fmt::Debug {
     fn id(&self) -> &str;
     fn name(&self) -> &str;
-    fn bind(&self, fqdn: &str, ip_addr: Ipv4Addr) -> Result<(), Error>;
+    fn bind(&self, fqdn: &str, target: DnsTarget) -> Result<(), Error>;
     fn unbind(&self, fqdn: &str) -> Result<(), Error>;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DnsTarget {
+    A(Ipv4Addr),
+    // TODO: Aaaa(Ipv6Addr),
+    Cname(String),
 }
 
 #[cfg(test)]
@@ -113,7 +120,7 @@ mod tests {
         fn name(&self) -> &str {
             &self.name
         }
-        fn bind(&self, _fqdn: &str, _ip_addr: Ipv4Addr) -> Result<(), Error> {
+        fn bind(&self, _fqdn: &str, _target: DnsTarget) -> Result<(), Error> {
             unimplemented!();
         }
         fn unbind(&self, _fqdn: &str) -> Result<(), Error> {

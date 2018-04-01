@@ -2,6 +2,7 @@ use cloud::Instance;
 use cloud::InstanceRunningState;
 use cloud::InstanceType;
 use cloud::aws::tags::TagFinder;
+use dns::DnsTarget;
 use failure::Error;
 use failure::ResultExt;
 use rusoto_ec2::AttributeValue;
@@ -73,7 +74,7 @@ impl AwsInstance {
         let instance_state_code = (i.state.unwrap().code.unwrap() as u8).into();
         let instance_type = InstanceType(i.instance_type.unwrap());
         let ebs_optimized = i.ebs_optimized.unwrap();
-        let ip_addr = match i.public_ip_address {
+        let public_ipv4_addr = match i.public_ip_address {
             Some(ip_addr_str) => {
                 let ip_addr = Ipv4Addr::from_str(&ip_addr_str)
                     .with_context(|_e| format!("not an IP address: {}", ip_addr_str))?;
@@ -81,11 +82,13 @@ impl AwsInstance {
             }
             None => None,
         };
+        let public_dns_name = i.public_dns_name;
         Ok(InstanceState {
             instance_state_code,
             instance_type,
             ebs_optimized,
-            ip_addr,
+            public_ipv4_addr,
+            public_dns_name,
         })
     }
 
@@ -173,12 +176,25 @@ impl Instance for AwsInstance {
             match state.instance_state_code {
                 InstanceStateCode::Pending | InstanceStateCode::Stopping => (),
                 InstanceStateCode::Running => {
-                    let ip_addr = state.ip_addr.ok_or_else(|| {
-                        format_err!("expected running instance to have IP address: {:?}", state)
-                    })?;
+                    let addr = {
+                        if let Some(public_dns_name) = state.public_dns_name {
+                            // Prefer the DNS name if it exists,
+                            // because AWS will resolve it to an internal IP where possible.
+                            Ok(DnsTarget::Cname(public_dns_name))
+                        } else if let Some(public_ipv4_addr) = state.public_ipv4_addr {
+                            // DNS names are probably disabled for this VPC.
+                            // Use the IPv4 address instead.
+                            Ok(DnsTarget::A(public_ipv4_addr))
+                        } else {
+                            Err(format_err!(
+                                "expected running instance to have IPv4 address: {:?}",
+                                state
+                            ))
+                        }
+                    }?;
                     return Ok(InstanceRunningState {
                         instance_type: state.instance_type,
-                        ip_addr,
+                        addr,
                     });
                 }
                 InstanceStateCode::Stopped => self.request_start()?,
@@ -212,7 +228,8 @@ struct InstanceState {
     instance_state_code: InstanceStateCode,
     instance_type: InstanceType,
     ebs_optimized: bool,
-    ip_addr: Option<Ipv4Addr>,
+    public_ipv4_addr: Option<Ipv4Addr>,
+    public_dns_name: Option<String>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

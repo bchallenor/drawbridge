@@ -1,9 +1,9 @@
+use dns::DnsTarget;
 use dns::DnsZone;
 use failure::Error;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
-use std::net::Ipv4Addr;
 use std::rc::Rc;
 
 #[derive(Clone)]
@@ -14,7 +14,7 @@ pub struct MemDnsZone {
 }
 
 struct MemDnsZoneState {
-    records: HashMap<String, Ipv4Addr>,
+    records: HashMap<String, DnsTarget>,
 }
 
 impl MemDnsZone {
@@ -28,7 +28,7 @@ impl MemDnsZone {
         })
     }
 
-    pub fn lookup(&self, fqdn: &str) -> Result<Option<Ipv4Addr>, Error> {
+    pub fn lookup(&self, fqdn: &str) -> Result<Option<DnsTarget>, Error> {
         let state = self.state.borrow();
         Ok(state.records.get(fqdn).cloned())
     }
@@ -49,9 +49,9 @@ impl DnsZone for MemDnsZone {
         &self.name
     }
 
-    fn bind(&self, fqdn: &str, ip_addr: Ipv4Addr) -> Result<(), Error> {
+    fn bind(&self, fqdn: &str, target: DnsTarget) -> Result<(), Error> {
         let mut state = self.state.borrow_mut();
-        state.records.insert(fqdn.to_owned(), ip_addr);
+        state.records.insert(fqdn.to_owned(), target);
         Ok(())
     }
 

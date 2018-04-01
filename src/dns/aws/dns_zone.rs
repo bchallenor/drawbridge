@@ -1,3 +1,4 @@
+use dns::DnsTarget;
 use dns::DnsZone;
 use failure::Error;
 use failure::ResultExt;
@@ -10,7 +11,6 @@ use rusoto_route53::ResourceRecord;
 use rusoto_route53::ResourceRecordSet;
 use rusoto_route53::Route53;
 use std::fmt;
-use std::net::Ipv4Addr;
 use std::rc::Rc;
 
 pub struct AwsDnsZone {
@@ -56,15 +56,15 @@ impl DnsZone for AwsDnsZone {
         &self.name
     }
 
-    fn bind(&self, fqdn: &str, ip_addr: Ipv4Addr) -> Result<(), Error> {
+    fn bind(&self, fqdn: &str, target: DnsTarget) -> Result<(), Error> {
+        let (type_, value) = match target {
+            DnsTarget::A(addr) => ("A", addr.to_string()),
+            DnsTarget::Cname(name) => ("CNAME", name),
+        };
         let desired = ResourceRecordSet {
             name: fqdn.to_owned(),
-            resource_records: Some(vec![
-                ResourceRecord {
-                    value: ip_addr.to_string(),
-                },
-            ]),
-            type_: "A".to_owned(),
+            resource_records: Some(vec![ResourceRecord { value }]),
+            type_: type_.to_owned(),
             ttl: Some(60),
             ..Default::default()
         };
@@ -73,8 +73,10 @@ impl DnsZone for AwsDnsZone {
     }
 
     fn unbind(&self, fqdn: &str) -> Result<(), Error> {
-        if let Some(existing) = self.find_record_set(fqdn, "A")? {
-            self.change_record_set("DELETE", existing)?;
+        for type_ in &["A", "CNAME"] {
+            if let Some(existing) = self.find_record_set(fqdn, type_)? {
+                self.change_record_set("DELETE", existing)?;
+            }
         }
         Ok(())
     }

@@ -2,11 +2,11 @@ pub mod aws;
 #[cfg(test)]
 pub mod mem;
 
+use dns::DnsTarget;
 use failure::Error;
 use iprules::IpIngressRule;
 use std::collections::HashSet;
 use std::fmt;
-use std::net::Ipv4Addr;
 use std::str;
 
 pub trait Cloud {
@@ -69,5 +69,5 @@ impl fmt::Debug for InstanceType {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InstanceRunningState {
     pub instance_type: InstanceType,
-    pub ip_addr: Ipv4Addr,
+    pub addr: DnsTarget,
 }
