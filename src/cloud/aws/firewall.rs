@@ -54,7 +54,8 @@ impl AwsFirewall {
             group_ids: Some(vec![self.id.clone()]),
             ..Default::default()
         };
-        let resp = self.client
+        let resp = self
+            .client
             .describe_security_groups(&req)
             .sync()
             .with_context(|_e| format!("failed to describe security group: {:?}", self))?;
@@ -168,22 +169,18 @@ fn to_ip_permission(rule: &IpIngressRule) -> IpPermission {
     };
     let (ip_ranges, ipv_6_ranges) = match *ip_cidr {
         IpNet::V4(ipv4_cidr) => (
-            Some(vec![
-                IpRange {
-                    cidr_ip: Some(ipv4_cidr.to_string()),
-                    ..Default::default()
-                },
-            ]),
+            Some(vec![IpRange {
+                cidr_ip: Some(ipv4_cidr.to_string()),
+                ..Default::default()
+            }]),
             None,
         ),
         IpNet::V6(ipv6_cidr) => (
             None,
-            Some(vec![
-                Ipv6Range {
-                    cidr_ipv_6: Some(ipv6_cidr.to_string()),
-                    ..Default::default()
-                },
-            ]),
+            Some(vec![Ipv6Range {
+                cidr_ipv_6: Some(ipv6_cidr.to_string()),
+                ..Default::default()
+            }]),
         ),
     };
     IpPermission {

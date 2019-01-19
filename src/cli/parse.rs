@@ -240,11 +240,13 @@ fn find_own_ip_addr() -> Result<Ipv4Addr, Error> {
     let mut core = Core::new().context("failed to create core reactor")?;
     let client = Client::new(&core.handle());
     let uri = "http://checkip.amazonaws.com/".parse().expect("valid URL");
-    let (status, body) = core.run(
-        client
-            .get(uri)
-            .and_then(|res| (futures::finished(res.status()), res.body().concat2())),
-    ).context("failed to contact checkip service")?;
+    let (status, body) = core
+        .run(
+            client
+                .get(uri)
+                .and_then(|res| (futures::finished(res.status()), res.body().concat2())),
+        )
+        .context("failed to contact checkip service")?;
     let content = str::from_utf8(&*body).context("expected checkip to return UTF8")?;
     if status != StatusCode::Ok {
         bail!("checkip service returned {}: {}", status, content);
@@ -281,7 +283,8 @@ mod tests {
                 ip_protocols: vec!["22/tcp".parse().unwrap()],
                 names: vec!["x".to_owned(), "y".to_owned()],
             },
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     #[test]
@@ -291,7 +294,8 @@ mod tests {
             Command::Close {
                 names: vec!["x".to_owned(), "y".to_owned()],
             },
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     #[test]
@@ -309,7 +313,8 @@ mod tests {
                 instance_type: Some(InstanceType::new("m3.medium")),
                 names: vec!["x".to_owned(), "y".to_owned()],
             },
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     #[test]
@@ -319,7 +324,8 @@ mod tests {
             Command::Stop {
                 names: vec!["x".to_owned(), "y".to_owned()],
             },
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     fn test_parse(args: &[&str], cmd: Command) -> Result<(), Error> {

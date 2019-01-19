@@ -1,5 +1,5 @@
-use dns::Dns;
 use dns::aws::dns_zone::AwsDnsZone;
+use dns::Dns;
 use failure::Error;
 use rusoto_core::Region;
 use rusoto_route53::Route53;

@@ -137,9 +137,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cloud::InstanceType;
     use cloud::mem::MemCloud;
     use cloud::mem::MemInstance;
+    use cloud::InstanceType;
     use dns::mem::MemDns;
     use ipnet::IpNet;
     use iprules::IpProtocol;
@@ -152,7 +152,8 @@ mod tests {
             &[],
             &["1.1.0.0/16".parse().unwrap(), "9.9.9.9/32".parse().unwrap()],
             &["22/tcp".parse().unwrap(), "80/tcp".parse().unwrap()],
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     #[test]
@@ -168,7 +169,8 @@ mod tests {
             ],
             &["1.1.0.0/16".parse().unwrap(), "9.9.9.9/32".parse().unwrap()],
             &["22/tcp".parse().unwrap(), "80/tcp".parse().unwrap()],
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     fn test_open_firewall(
@@ -225,7 +227,8 @@ mod tests {
                 Ok(inst)
             },
             None,
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     #[test]
@@ -237,7 +240,8 @@ mod tests {
                 Ok(inst)
             },
             Some(InstanceType::new("t2.large")),
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     #[test]
@@ -249,7 +253,8 @@ mod tests {
                 Ok(inst)
             },
             None,
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     #[test]
@@ -261,7 +266,8 @@ mod tests {
                 Ok(inst)
             },
             Some(InstanceType::new("t2.large")),
-        ).unwrap_err();
+        )
+        .unwrap_err();
         assert_eq!(
             "instance must be stopped to change its type",
             err.to_string()
@@ -319,7 +325,8 @@ mod tests {
             "example.com",
             // and not to any of these
             &["other.example.com", "example.net"],
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     #[test]
@@ -330,7 +337,8 @@ mod tests {
             "example.com",
             // and not to any of these
             &["other.example.com", "example.net"],
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     #[test]
@@ -341,7 +349,8 @@ mod tests {
             "sub.example.com",
             // and not to any of these
             &["example.com", "other.example.com", "example.net"],
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     fn test_bind_dns(
@@ -350,7 +359,8 @@ mod tests {
         other_zone_fqdns: &[&str],
     ) -> Result<(), Error> {
         let cloud = MemCloud::new()?;
-        let inst = cloud.create_instance("inst", Some(inst_fqdn), &InstanceType::new("t2.medium"))?;
+        let inst =
+            cloud.create_instance("inst", Some(inst_fqdn), &InstanceType::new("t2.medium"))?;
 
         let dns = MemDns::new()?;
         let zone = dns.create_dns_zone(zone_fqdn)?;

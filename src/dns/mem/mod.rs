@@ -1,8 +1,8 @@
 mod dns_zone;
 
+pub use dns::mem::dns_zone::MemDnsZone;
 use dns::Dns;
 use dns::DnsZone;
-pub use dns::mem::dns_zone::MemDnsZone;
 use failure::Error;
 use std::cell::RefCell;
 use std::collections::HashMap;

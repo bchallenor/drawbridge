@@ -1,6 +1,6 @@
-use cloud::Cloud;
 use cloud::aws::firewall::AwsFirewall;
 use cloud::aws::instance::AwsInstance;
+use cloud::Cloud;
 use failure::Error;
 use failure::ResultExt;
 use rusoto_core::Region;

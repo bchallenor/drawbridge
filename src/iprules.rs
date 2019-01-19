@@ -31,7 +31,8 @@ impl str::FromStr for IpPortRange {
     type Err = ParseIpPortRangeError;
 
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
-        let parts = s.split('-')
+        let parts = s
+            .split('-')
             .map(|x| x.parse::<u16>().map_err(|_| ParseIpPortRangeError(())))
             .collect::<result::Result<Vec<_>, Self::Err>>()?;
         match parts.len() {

@@ -1,7 +1,7 @@
+use cloud::aws::tags::TagFinder;
 use cloud::Instance;
 use cloud::InstanceRunningState;
 use cloud::InstanceType;
-use cloud::aws::tags::TagFinder;
 use dns::DnsTarget;
 use failure::Error;
 use failure::ResultExt;
@@ -41,7 +41,8 @@ impl AwsInstance {
             for i in r.instances.unwrap() {
                 let id = i.instance_id.unwrap();
                 let tags = i.tags.unwrap();
-                let name = tags.find_tag("Name")
+                let name = tags
+                    .find_tag("Name")
                     .ok_or_else(|| format_err!("expected instance to have Name tag: {}", id))?;
                 let fqdn = tags.find_tag("Fqdn");
                 let value = AwsInstance {
@@ -61,11 +62,13 @@ impl AwsInstance {
             instance_ids: Some(vec![self.id.clone()]),
             ..Default::default()
         };
-        let resp = self.client
+        let resp = self
+            .client
             .describe_instances(&req)
             .sync()
             .with_context(|_e| format!("failed to describe instance: {:?}", self))?;
-        let i = resp.reservations
+        let i = resp
+            .reservations
             .unwrap()
             .into_iter()
             .next()

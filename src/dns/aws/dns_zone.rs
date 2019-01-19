@@ -91,7 +91,8 @@ impl AwsDnsZone {
             max_items: Some("1".to_owned()), // ...String?
             ..Default::default()
         };
-        let resp = self.client
+        let resp = self
+            .client
             .list_resource_record_sets(&req)
             .sync()
             .with_context(|_e| format!("failed to find existing DNS entry: {}", fqdn))?;
@@ -104,12 +105,10 @@ impl AwsDnsZone {
             hosted_zone_id: self.id.clone(),
             change_batch: ChangeBatch {
                 comment: None,
-                changes: vec![
-                    Change {
-                        action: action.to_owned(),
-                        resource_record_set: record_set,
-                    },
-                ],
+                changes: vec![Change {
+                    action: action.to_owned(),
+                    resource_record_set: record_set,
+                }],
             },
         };
         self.client

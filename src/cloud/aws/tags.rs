@@ -14,10 +14,7 @@ where
                 Tag {
                     key: Some(ref k),
                     value: Some(ref v),
-                } if k == key =>
-                {
-                    Some(v as &str)
-                }
+                } if k == key => Some(v as &str),
                 _ => None,
             })
             .next()
