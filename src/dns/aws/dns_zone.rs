@@ -1,5 +1,5 @@
-use dns::DnsTarget;
-use dns::DnsZone;
+use crate::dns::DnsTarget;
+use crate::dns::DnsZone;
 use failure::Error;
 use failure::ResultExt;
 use rusoto_route53::Change;

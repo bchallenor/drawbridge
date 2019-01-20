@@ -1,7 +1,7 @@
-use cloud::Instance;
-use cloud::InstanceRunningState;
-use cloud::InstanceType;
-use dns::DnsTarget;
+use crate::cloud::Instance;
+use crate::cloud::InstanceRunningState;
+use crate::cloud::InstanceType;
+use crate::dns::DnsTarget;
 use failure::Error;
 use std::cell::RefCell;
 use std::fmt;

@@ -2,9 +2,9 @@ pub mod aws;
 #[cfg(test)]
 pub mod mem;
 
-use dns::DnsTarget;
+use crate::dns::DnsTarget;
+use crate::iprules::IpIngressRule;
 use failure::Error;
-use iprules::IpIngressRule;
 use std::collections::HashSet;
 use std::fmt;
 use std::str;

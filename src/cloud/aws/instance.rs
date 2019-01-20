@@ -1,8 +1,8 @@
-use cloud::aws::tags::TagFinder;
-use cloud::Instance;
-use cloud::InstanceRunningState;
-use cloud::InstanceType;
-use dns::DnsTarget;
+use crate::cloud::aws::tags::TagFinder;
+use crate::cloud::Instance;
+use crate::cloud::InstanceRunningState;
+use crate::cloud::InstanceType;
+use crate::dns::DnsTarget;
 use failure::Error;
 use failure::ResultExt;
 use rusoto_ec2::AttributeValue;

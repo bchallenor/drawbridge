@@ -1,5 +1,5 @@
-use dns::DnsTarget;
-use dns::DnsZone;
+use crate::dns::DnsTarget;
+use crate::dns::DnsZone;
 use failure::Error;
 use std::cell::RefCell;
 use std::collections::HashMap;

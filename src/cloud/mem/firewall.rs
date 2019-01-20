@@ -1,6 +1,6 @@
-use cloud::Firewall;
+use crate::cloud::Firewall;
+use crate::iprules::IpIngressRule;
 use failure::Error;
-use iprules::IpIngressRule;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::fmt;

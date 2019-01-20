@@ -15,8 +15,8 @@ mod cloud;
 mod dns;
 mod iprules;
 
-use cloud::aws::AwsCloud;
-use dns::aws::AwsDns;
+use crate::cloud::aws::AwsCloud;
+use crate::dns::aws::AwsDns;
 use failure::Error;
 use std::env;
 use std::process;

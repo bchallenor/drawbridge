@@ -1,12 +1,12 @@
 mod dispatch;
 mod parse;
 
-pub use cli::dispatch::dispatch;
-pub use cli::parse::parse_from_safe;
+pub use crate::cli::dispatch::dispatch;
+pub use crate::cli::parse::parse_from_safe;
 
-use cloud::InstanceType;
+use crate::cloud::InstanceType;
+use crate::iprules::IpProtocol;
 use ipnet::IpNet;
-use iprules::IpProtocol;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Command {
