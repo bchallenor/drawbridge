@@ -1,5 +1,5 @@
-use dns::DnsTarget;
-use dns::DnsZone;
+use crate::dns::DnsTarget;
+use crate::dns::DnsZone;
 use failure::Error;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -35,7 +35,7 @@ impl MemDnsZone {
 }
 
 impl fmt::Debug for MemDnsZone {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({})", self.name, self.id)
     }
 }

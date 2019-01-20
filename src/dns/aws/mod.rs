@@ -1,5 +1,5 @@
-use dns::aws::dns_zone::AwsDnsZone;
-use dns::Dns;
+use crate::dns::aws::dns_zone::AwsDnsZone;
+use crate::dns::Dns;
 use failure::Error;
 use rusoto_core::Region;
 use rusoto_route53::Route53;
@@ -9,7 +9,7 @@ use std::rc::Rc;
 mod dns_zone;
 
 pub struct AwsDns {
-    client: Rc<Route53>,
+    client: Rc<dyn Route53>,
 }
 
 impl AwsDns {

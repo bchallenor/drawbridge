@@ -1,6 +1,6 @@
-use cloud::Firewall;
+use crate::cloud::Firewall;
+use crate::iprules::IpIngressRule;
 use failure::Error;
-use iprules::IpIngressRule;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::fmt;
@@ -30,7 +30,7 @@ impl MemFirewall {
 }
 
 impl fmt::Debug for MemFirewall {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({})", self.name, self.id)
     }
 }

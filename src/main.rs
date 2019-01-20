@@ -1,23 +1,16 @@
-extern crate clap;
 #[macro_use]
 extern crate failure;
-extern crate futures;
-extern crate hyper;
-extern crate ipnet;
-extern crate openssl_probe;
-extern crate rusoto_core;
-extern crate rusoto_ec2;
-extern crate rusoto_route53;
-extern crate tokio_core;
 
 mod cli;
 mod cloud;
 mod dns;
 mod iprules;
 
-use cloud::aws::AwsCloud;
-use dns::aws::AwsDns;
+use crate::cloud::aws::AwsCloud;
+use crate::dns::aws::AwsDns;
+use clap;
 use failure::Error;
+use openssl_probe;
 use std::env;
 use std::process;
 

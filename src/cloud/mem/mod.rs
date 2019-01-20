@@ -1,12 +1,12 @@
 mod firewall;
 mod instance;
 
-pub use cloud::mem::firewall::MemFirewall;
-pub use cloud::mem::instance::MemInstance;
-use cloud::Cloud;
-use cloud::Firewall;
-use cloud::Instance;
-use cloud::InstanceType;
+pub use crate::cloud::mem::firewall::MemFirewall;
+pub use crate::cloud::mem::instance::MemInstance;
+use crate::cloud::Cloud;
+use crate::cloud::Firewall;
+use crate::cloud::Instance;
+use crate::cloud::InstanceType;
 use failure::Error;
 use ipnet::Ipv4AddrRange;
 use ipnet::Ipv4Net;

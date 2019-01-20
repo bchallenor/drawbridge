@@ -1,12 +1,12 @@
-use cli::Command;
-use cloud::Cloud;
-use cloud::Firewall;
-use cloud::Instance;
-use dns::Dns;
-use dns::DnsTarget;
-use dns::DnsZone;
+use crate::cli::Command;
+use crate::cloud::Cloud;
+use crate::cloud::Firewall;
+use crate::cloud::Instance;
+use crate::dns::Dns;
+use crate::dns::DnsTarget;
+use crate::dns::DnsZone;
+use crate::iprules::IpIngressRule;
 use failure::Error;
-use iprules::IpIngressRule;
 use std::collections::HashSet;
 
 pub fn dispatch<C, D>(cmd: Command, cloud: &C, dns: &D) -> Result<(), Error>
@@ -137,12 +137,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cloud::mem::MemCloud;
-    use cloud::mem::MemInstance;
-    use cloud::InstanceType;
-    use dns::mem::MemDns;
+    use crate::cloud::mem::MemCloud;
+    use crate::cloud::mem::MemInstance;
+    use crate::cloud::InstanceType;
+    use crate::dns::mem::MemDns;
+    use crate::iprules::IpProtocol;
     use ipnet::IpNet;
-    use iprules::IpProtocol;
 
     // TODO(ques_in_main)
 

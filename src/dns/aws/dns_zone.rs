@@ -1,5 +1,5 @@
-use dns::DnsTarget;
-use dns::DnsZone;
+use crate::dns::DnsTarget;
+use crate::dns::DnsZone;
 use failure::Error;
 use failure::ResultExt;
 use rusoto_route53::Change;
@@ -16,11 +16,11 @@ use std::rc::Rc;
 pub struct AwsDnsZone {
     id: String,
     name: String,
-    client: Rc<Route53>,
+    client: Rc<dyn Route53>,
 }
 
 impl AwsDnsZone {
-    pub(super) fn list(client: &Rc<Route53>) -> Result<Vec<AwsDnsZone>, Error> {
+    pub(super) fn list(client: &Rc<dyn Route53>) -> Result<Vec<AwsDnsZone>, Error> {
         let req = ListHostedZonesRequest {
             ..Default::default()
         };
@@ -42,7 +42,7 @@ impl AwsDnsZone {
 }
 
 impl fmt::Debug for AwsDnsZone {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({})", self.name, self.id)
     }
 }

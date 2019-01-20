@@ -1,6 +1,6 @@
-use cloud::aws::firewall::AwsFirewall;
-use cloud::aws::instance::AwsInstance;
-use cloud::Cloud;
+use crate::cloud::aws::firewall::AwsFirewall;
+use crate::cloud::aws::instance::AwsInstance;
+use crate::cloud::Cloud;
 use failure::Error;
 use failure::ResultExt;
 use rusoto_core::Region;
@@ -16,7 +16,7 @@ mod instance;
 mod tags;
 
 pub struct AwsCloud {
-    client: Rc<Ec2>,
+    client: Rc<dyn Ec2>,
 }
 
 impl AwsCloud {

@@ -1,7 +1,7 @@
-use cloud::Instance;
-use cloud::InstanceRunningState;
-use cloud::InstanceType;
-use dns::DnsTarget;
+use crate::cloud::Instance;
+use crate::cloud::InstanceRunningState;
+use crate::cloud::InstanceType;
+use crate::dns::DnsTarget;
 use failure::Error;
 use std::cell::RefCell;
 use std::fmt;
@@ -56,7 +56,7 @@ impl MemInstance {
 }
 
 impl fmt::Debug for MemInstance {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({})", self.name, self.id)
     }
 }

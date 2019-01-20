@@ -2,6 +2,7 @@
 name = "drawbridge"
 version = "0.1.0"
 authors = ["Ben Challenor <ben@challenor.org>"]
+edition = "2018"
 
 [dependencies]
 clap = "2.29.2"
