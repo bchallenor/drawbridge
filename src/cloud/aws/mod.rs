@@ -16,7 +16,7 @@ mod instance;
 mod tags;
 
 pub struct AwsCloud {
-    client: Rc<Ec2>,
+    client: Rc<dyn Ec2>,
 }
 
 impl AwsCloud {

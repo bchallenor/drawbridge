@@ -7,7 +7,7 @@ use std::str;
 pub struct IpPortRange(pub u16, pub u16);
 
 impl fmt::Display for IpPortRange {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let &IpPortRange(ref from, ref to) = self;
         if from == to {
             write!(f, "{}", from)
@@ -18,7 +18,7 @@ impl fmt::Display for IpPortRange {
 }
 
 impl fmt::Debug for IpPortRange {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, f)
     }
 }
@@ -50,7 +50,7 @@ pub enum IpProtocol {
 }
 
 impl fmt::Display for IpProtocol {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             &IpProtocol::Tcp(ref range) => write!(f, "{}/tcp", range),
             &IpProtocol::Udp(ref range) => write!(f, "{}/udp", range),
@@ -59,7 +59,7 @@ impl fmt::Display for IpProtocol {
 }
 
 impl fmt::Debug for IpProtocol {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, f)
     }
 }
@@ -95,7 +95,7 @@ impl str::FromStr for IpProtocol {
 pub struct IpIngressRule(pub IpNet, pub IpProtocol);
 
 impl fmt::Debug for IpIngressRule {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let &IpIngressRule(ref net, ref protocol) = self;
         write!(f, "{} -> {}", protocol, net)
     }

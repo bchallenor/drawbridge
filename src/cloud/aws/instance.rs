@@ -23,11 +23,11 @@ pub struct AwsInstance {
     id: String,
     name: String,
     fqdn: Option<String>,
-    client: Rc<Ec2>,
+    client: Rc<dyn Ec2>,
 }
 
 impl AwsInstance {
-    pub(super) fn list(client: &Rc<Ec2>, filter: Filter) -> Result<Vec<AwsInstance>, Error> {
+    pub(super) fn list(client: &Rc<dyn Ec2>, filter: Filter) -> Result<Vec<AwsInstance>, Error> {
         let req = DescribeInstancesRequest {
             filters: Some(vec![filter]),
             ..Default::default()
@@ -141,7 +141,7 @@ impl AwsInstance {
 }
 
 impl fmt::Debug for AwsInstance {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({})", self.name, self.id)
     }
 }

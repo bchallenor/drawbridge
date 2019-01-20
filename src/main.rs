@@ -1,14 +1,9 @@
-extern crate clap;
+use clap;
 #[macro_use]
 extern crate failure;
-extern crate futures;
-extern crate hyper;
-extern crate ipnet;
-extern crate openssl_probe;
-extern crate rusoto_core;
-extern crate rusoto_ec2;
-extern crate rusoto_route53;
-extern crate tokio_core;
+use futures;
+
+use openssl_probe;
 
 mod cli;
 mod cloud;

@@ -24,11 +24,11 @@ use std::str::FromStr;
 pub struct AwsFirewall {
     id: String,
     name: String,
-    client: Rc<Ec2>,
+    client: Rc<dyn Ec2>,
 }
 
 impl AwsFirewall {
-    pub(super) fn list(client: &Rc<Ec2>, filter: Filter) -> Result<Vec<AwsFirewall>, Error> {
+    pub(super) fn list(client: &Rc<dyn Ec2>, filter: Filter) -> Result<Vec<AwsFirewall>, Error> {
         let req = DescribeSecurityGroupsRequest {
             filters: Some(vec![filter]),
             ..Default::default()
@@ -68,7 +68,7 @@ impl AwsFirewall {
 }
 
 impl fmt::Debug for AwsFirewall {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} ({})", self.name, self.id)
     }
 }

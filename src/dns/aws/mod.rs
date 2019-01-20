@@ -9,7 +9,7 @@ use std::rc::Rc;
 mod dns_zone;
 
 pub struct AwsDns {
-    client: Rc<Route53>,
+    client: Rc<dyn Route53>,
 }
 
 impl AwsDns {
