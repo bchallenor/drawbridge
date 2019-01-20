@@ -1,9 +1,5 @@
-use clap;
 #[macro_use]
 extern crate failure;
-use futures;
-
-use openssl_probe;
 
 mod cli;
 mod cloud;
@@ -12,7 +8,9 @@ mod iprules;
 
 use crate::cloud::aws::AwsCloud;
 use crate::dns::aws::AwsDns;
+use clap;
 use failure::Error;
+use openssl_probe;
 use std::env;
 use std::process;
 
